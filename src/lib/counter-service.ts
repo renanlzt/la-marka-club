@@ -162,7 +162,9 @@ export async function processCounterSale(data: {
   const balanceInfo = await getCustomerBalance(customerId);
   const firstName = customer.name.trim().split(' ')[0];
 
-  const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://club.lamarka.com.br';
+  const appBaseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.NODE_ENV === 'production' ? 'https://club.lamarka.com.br' : 'http://localhost:3000');
   const walletUrl = `${appBaseUrl}/c/${customer.magicToken}`;
 
   const formatBRL = (val: number) =>

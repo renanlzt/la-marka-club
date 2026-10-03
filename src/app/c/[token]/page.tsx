@@ -19,7 +19,35 @@ export default async function CustomerWalletPage({
   const walletData = await getCustomerWalletByToken(token);
 
   if (!walletData) {
-    notFound();
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-lamarka-100/50 via-lamarka-50 to-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-full max-w-sm bg-white rounded-3xl border border-lamarka-200 p-8 shadow-sm flex flex-col items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-lamarka-100 text-lamarka-700 flex items-center justify-center">
+            <Store className="w-7 h-7" />
+          </div>
+          <h1 className="text-xl font-serif font-bold text-lamarka-900">
+            Carteira Não Localizada
+          </h1>
+          <p className="text-xs text-lamarka-600 font-light leading-relaxed">
+            Este link de acesso pode estar incompleto ou a cliente ainda não foi cadastrada no La Marka Club.
+          </p>
+          <div className="w-full pt-4 border-t border-lamarka-100 flex flex-col gap-2">
+            <a
+              href="/balcao"
+              className="w-full py-2.5 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-colors"
+            >
+              Ir para o Caixa / Balcão
+            </a>
+            <a
+              href="/admin/clientes"
+              className="w-full py-2.5 rounded-xl bg-lamarka-100 hover:bg-lamarka-200 text-lamarka-800 text-xs font-semibold transition-colors"
+            >
+              Consultar Clientes no Admin
+            </a>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   const { customer, balanceInfo, transactions } = walletData;
