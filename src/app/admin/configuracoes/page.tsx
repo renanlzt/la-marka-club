@@ -88,10 +88,10 @@ export default function AdminConfiguracoesPage() {
   return (
     <div className="p-6 sm:p-8 flex flex-col gap-6 max-w-5xl mx-auto w-full">
       <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-lamarka-200/80 text-lamarka-800 text-xs font-semibold uppercase tracking-wider mb-2">
-          <Settings className="w-3.5 h-3.5 text-lamarka-600" /> Parâmetros da Loja
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-lamarka-200/80 text-lamarka-800 text-[10px] font-semibold uppercase tracking-[0.18em] mb-2 border border-lamarka-300/50">
+          <Settings className="w-3 h-3 text-[#DFB76C]" /> Parâmetros da Loja
         </div>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-lamarka-900">
+        <h1 className="text-3xl sm:text-4xl font-serif font-medium text-lamarka-900 tracking-tight">
           Configurações & Mensagens
         </h1>
         <p className="text-xs sm:text-sm text-lamarka-600 font-light mt-1">

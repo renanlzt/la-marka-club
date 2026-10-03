@@ -18,27 +18,31 @@ export function ExpirationBadge({
 
   return (
     <div
-      className={`mt-4 p-3.5 rounded-xl border flex items-center gap-3 text-left transition-all ${
+      className={`p-4 rounded-2xl border flex items-center gap-3.5 text-left transition-all shadow-card ${
         isUrgent
-          ? 'bg-amber-50/90 border-amber-200 text-amber-900'
-          : 'bg-lamarka-50 border-lamarka-200 text-lamarka-800'
+          ? 'bg-amber-50/95 border-amber-200/80 text-amber-950'
+          : 'bg-white border-lamarka-200/90 text-lamarka-900'
       }`}
     >
       <div
-        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-          isUrgent ? 'bg-amber-100 text-amber-700' : 'bg-lamarka-200 text-lamarka-700'
+        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+          isUrgent ? 'bg-amber-100 text-amber-800' : 'bg-lamarka-100 text-lamarka-700'
         }`}
       >
-        {isUrgent ? <AlertCircle className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+        {isUrgent ? (
+          <AlertCircle className="w-4 h-4 text-amber-600" strokeWidth={1.5} />
+        ) : (
+          <Clock className="w-4 h-4 text-lamarka-600" strokeWidth={1.5} />
+        )}
       </div>
 
       <div className="flex-1 text-xs leading-snug">
-        <span className="font-semibold block">
-          R$ {expiringAmount.toFixed(2)} expiram em {expiringInDays}{' '}
+        <span className="font-semibold block font-sans">
+          R$ {expiringAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} expiram em {expiringInDays}{' '}
           {expiringInDays === 1 ? 'dia' : 'dias'}!
         </span>
-        <span className="text-opacity-80">
-          Aproveite para garantir aquele look especial na La Marka antes do prazo.
+        <span className="text-lamarka-600 font-light text-[11px] mt-0.5 block">
+          Aproveite para garantir aquele look especial na La Marka antes do vencimento.
         </span>
       </div>
     </div>

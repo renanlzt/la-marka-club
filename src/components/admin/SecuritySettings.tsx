@@ -70,10 +70,10 @@ export function SecuritySettings() {
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-lamarka-200/90 p-6 shadow-sm">
+    <div className="bg-white rounded-3xl border border-lamarka-200/90 p-6 sm:p-7 shadow-card">
       <div className="flex items-center gap-2 mb-4 pb-3 border-b border-lamarka-100">
-        <Shield className="w-5 h-5 text-lamarka-700" />
-        <h2 className="text-base font-serif font-bold text-lamarka-900">
+        <Shield className="w-5 h-5 text-lamarka-700" strokeWidth={1.5} />
+        <h2 className="text-base font-serif font-medium text-lamarka-900">
           Acesso & Segurança do Painel de Gestão
         </h2>
       </div>
@@ -166,7 +166,7 @@ export function SecuritySettings() {
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2.5 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+            className="px-6 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-luxury hover:shadow-luxury-lg flex items-center gap-2 disabled:opacity-50"
           >
             {loading ? 'Salvando...' : 'Atualizar Credenciais de Acesso'}
           </button>

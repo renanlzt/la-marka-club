@@ -60,23 +60,23 @@ export function StatsCards({ stats }: StatsCardsProps) {
         return (
           <div
             key={idx}
-            className={`p-5 rounded-2xl bg-white border border-lamarka-200/90 shadow-xs flex flex-col justify-between ${
-              card.highlight ? 'ring-2 ring-emerald-500/20' : ''
+            className={`p-5.5 rounded-3xl bg-white border border-lamarka-200/90 shadow-card flex flex-col justify-between transition-all hover:shadow-card-hover ${
+              card.highlight ? 'ring-2 ring-emerald-600/20' : ''
             }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-lamarka-600">
+            <div className="flex items-center justify-between mb-3.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-lamarka-500">
                 {card.title}
               </span>
               <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center border ${card.color}`}
+                className={`w-9 h-9 rounded-2xl flex items-center justify-center border ${card.color} shadow-2xs`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4" strokeWidth={1.5} />
               </div>
             </div>
 
             <div>
-              <div className="text-2xl font-serif font-bold text-lamarka-900 tracking-tight">
+              <div className="text-3xl font-serif font-semibold text-lamarka-900 tracking-tight">
                 {card.value}
               </div>
               <p className="text-[11px] text-lamarka-500 font-light mt-1">

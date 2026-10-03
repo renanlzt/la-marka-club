@@ -10,8 +10,38 @@
 
 body {
   background-color: #FAF6F5;
-  color: #2D2322;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  color: #3D2220;
   margin: 0;
   padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom sleek scrollbar for luxury aesthetics */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF6F5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #DFC2BC;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C59B94;
+}
+
+/* Shimmer animation for card effects */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s infinite linear;
 }

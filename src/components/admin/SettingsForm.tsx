@@ -38,10 +38,10 @@ export function SettingsForm({ initialSettings, onSave }: SettingsFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white rounded-3xl border border-lamarka-200/90 p-6 shadow-sm flex flex-col gap-5"
+      className="bg-white rounded-3xl border border-lamarka-200/90 p-6 sm:p-7 shadow-card flex flex-col gap-5"
     >
       <div className="border-b border-lamarka-100 pb-4">
-        <h3 className="text-lg font-serif font-bold text-lamarka-900">
+        <h3 className="text-lg font-serif font-medium text-lamarka-900">
           Regras Gerais do Clube
         </h3>
         <p className="text-xs text-lamarka-600 font-light mt-0.5">
@@ -176,9 +176,9 @@ export function SettingsForm({ initialSettings, onSave }: SettingsFormProps) {
         <button
           type="submit"
           disabled={saving}
-          className="px-6 py-2.5 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5"
+          className="px-6 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-luxury hover:shadow-luxury-lg flex items-center gap-2"
         >
-          <Save className="w-3.5 h-3.5" />
+          <Save className="w-3.5 h-3.5" strokeWidth={1.5} />
           {saving ? 'Salvando...' : 'Salvar Parâmetros'}
         </button>
       </div>

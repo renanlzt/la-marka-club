@@ -96,10 +96,10 @@ export default function AdminAjustesPage() {
   return (
     <div className="p-6 sm:p-8 flex flex-col gap-6 max-w-4xl mx-auto w-full">
       <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-lamarka-200/80 text-lamarka-800 text-xs font-semibold uppercase tracking-wider mb-2">
-          <Sliders className="w-3.5 h-3.5 text-lamarka-600" /> Auditoria & Ajustes
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-lamarka-200/80 text-lamarka-800 text-[10px] font-semibold uppercase tracking-[0.18em] mb-2 border border-lamarka-300/50">
+          <Sliders className="w-3 h-3 text-[#DFB76C]" /> Auditoria & Ajustes
         </div>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-lamarka-900">
+        <h1 className="text-3xl sm:text-4xl font-serif font-medium text-lamarka-900 tracking-tight">
           Ajustes Manuais de Saldo
         </h1>
         <p className="text-xs sm:text-sm text-lamarka-600 font-light mt-1">
@@ -108,36 +108,37 @@ export default function AdminAjustesPage() {
       </div>
 
       {/* Busca da Cliente */}
-      <div className="bg-white rounded-3xl border border-lamarka-200/90 p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-lamarka-800 mb-3">
+      <div className="bg-white rounded-3xl border border-lamarka-200/90 p-6 sm:p-7 shadow-card">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-lamarka-800 mb-3">
           1. Localizar Cliente para Ajuste
         </h2>
-        <form onSubmit={handleSearch} className="flex gap-2">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2.5">
           <input
             type="text"
             value={phoneQuery}
             onChange={(e) => setPhoneQuery(e.target.value)}
             placeholder="Telefone ou Nome da cliente..."
-            className="flex-1 px-4 py-2.5 rounded-xl border border-lamarka-200 text-xs sm:text-sm focus:outline-none focus:border-lamarka-500"
+            className="flex-1 px-4 py-2.5 rounded-2xl border border-lamarka-200 text-xs sm:text-sm focus:outline-none focus:border-lamarka-600 focus:ring-2 focus:ring-lamarka-200 shadow-2xs"
           />
           <button
             type="submit"
             disabled={searching}
-            className="px-5 py-2.5 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold"
+            className="px-6 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-sm transition-all"
           >
-            {searching ? 'Buscando...' : 'Buscar'}
+            {searching ? 'Buscando...' : 'Buscar Cliente'}
           </button>
         </form>
 
         {customer && (
-          <div className="mt-4 p-4 rounded-2xl bg-lamarka-50 border border-lamarka-200 flex items-center justify-between">
+          <div className="mt-4 p-4.5 rounded-2xl bg-lamarka-50/80 border border-lamarka-200/80 flex items-center justify-between shadow-2xs">
             <div>
-              <h3 className="text-sm font-bold text-lamarka-900">{customer.name}</h3>
-              <p className="text-xs text-lamarka-600">Tel: {customer.phone}</p>
+              <span className="text-[10px] uppercase font-semibold text-lamarka-500 tracking-wider block">Cliente Selecionada</span>
+              <h3 className="text-base font-serif font-medium text-lamarka-900">{customer.name}</h3>
+              <p className="text-xs text-lamarka-600 font-light mt-0.5">Tel: {customer.phone}</p>
             </div>
             <div className="text-right">
-              <span className="text-[11px] text-lamarka-500 block">Saldo Atual</span>
-              <span className="text-lg font-bold font-serif text-emerald-700">
+              <span className="text-[10px] uppercase font-semibold text-lamarka-500 tracking-wider block">Saldo Atual</span>
+              <span className="text-xl font-serif font-semibold text-emerald-800">
                 R$ {customer.balanceInfo.availableBalance.toFixed(2)}
               </span>
             </div>

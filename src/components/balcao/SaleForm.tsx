@@ -104,32 +104,42 @@ export function SaleForm({
   };
 
   return (
-    <div className="w-full bg-white rounded-3xl border border-lamarka-200/90 p-6 shadow-sm">
+    <div className="w-full bg-white rounded-3xl border border-lamarka-200/90 p-6 sm:p-7 shadow-card">
       {/* Resumo da Cliente Selecionada */}
-      <div className="flex items-center justify-between pb-4 border-b border-lamarka-100">
-        <div>
-          <span className="text-[11px] font-semibold text-lamarka-500 uppercase tracking-wider block">
-            Cliente Atendida
-          </span>
-          <h3 className="text-xl font-serif font-bold text-lamarka-900">
-            {customer.name}
-          </h3>
-          <p className="text-xs text-lamarka-600 font-light">
-            Tel: {customer.phone} {customer.birthDay && `• Aniversário: ${customer.birthDay}/${customer.birthMonth}`}
-          </p>
+      <div className="flex items-center justify-between pb-5 border-b border-lamarka-100">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-lamarka-100/80 border border-lamarka-200 text-lamarka-800 flex items-center justify-center font-serif font-bold text-base shrink-0 shadow-2xs">
+            {customer.name
+              .split(' ')
+              .map((n) => n[0])
+              .slice(0, 2)
+              .join('')
+              .toUpperCase()}
+          </div>
+          <div>
+            <span className="text-[10px] font-semibold text-lamarka-500 uppercase tracking-[0.18em] block">
+              Cliente no Caixa
+            </span>
+            <h3 className="text-xl sm:text-2xl font-serif font-medium text-lamarka-900 leading-tight">
+              {customer.name}
+            </h3>
+            <p className="text-xs text-lamarka-600 font-light mt-0.5">
+              Tel: {customer.phone} {customer.birthDay && `• Aniversário: ${customer.birthDay}/${customer.birthMonth}`}
+            </p>
+          </div>
         </div>
 
         <div className="text-right">
-          <span className="text-[11px] font-medium text-lamarka-600 block">
+          <span className="text-[10px] font-semibold text-lamarka-500 uppercase tracking-wider block">
             Saldo Disponível
           </span>
-          <span className="text-xl font-bold font-serif text-emerald-700">
-            R$ {availableBalance.toFixed(2)}
+          <span className="text-xl sm:text-2xl font-serif font-semibold text-emerald-800 block">
+            R$ {availableBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
           <button
             type="button"
             onClick={onClearCustomer}
-            className="text-[11px] text-lamarka-400 hover:text-lamarka-700 block mt-0.5 underline"
+            className="text-[11px] text-lamarka-400 hover:text-lamarka-800 block mt-0.5 underline transition-colors"
           >
             Trocar cliente
           </button>
@@ -137,28 +147,28 @@ export function SaleForm({
       </div>
 
       {customer.balanceInfo.expiringAmount > 0 && customer.balanceInfo.expiringInDays && (
-        <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200/70 text-amber-900 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
-          <span>
-            Atenção: <strong>R$ {customer.balanceInfo.expiringAmount.toFixed(2)}</strong> de cashback expiram em {customer.balanceInfo.expiringInDays} dias! Excelente momento para a cliente utilizar hoje.
+        <div className="mt-4 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/80 text-amber-950 text-xs flex items-center gap-2.5 shadow-2xs">
+          <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" strokeWidth={1.5} />
+          <span className="font-light">
+            Atenção: <strong className="font-semibold text-amber-900">R$ {customer.balanceInfo.expiringAmount.toFixed(2)}</strong> de cashback expiram em {customer.balanceInfo.expiringInDays} dias! Excelente momento para a cliente abater hoje.
           </span>
         </div>
       )}
 
       {error && (
-        <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+        <div className="mt-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium">
           {error}
         </div>
       )}
 
       {/* Formulário de Registro de Venda */}
-      <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4.5">
         <div>
-          <label className="text-xs font-semibold text-lamarka-800 block mb-1">
+          <label className="text-xs font-semibold uppercase tracking-wider text-lamarka-800 block mb-1.5">
             Valor Total da Compra (R$) *
           </label>
           <div className="relative">
-            <span className="absolute left-4 top-3 text-sm font-semibold text-lamarka-400">
+            <span className="absolute left-4 top-3 text-base font-serif text-lamarka-400 font-medium">
               R$
             </span>
             <input
@@ -167,7 +177,7 @@ export function SaleForm({
               value={purchaseAmount}
               onChange={(e) => setPurchaseAmount(e.target.value)}
               placeholder="0,00"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-lamarka-200 text-lg font-bold text-lamarka-900 focus:outline-none focus:border-lamarka-500 focus:ring-2 focus:ring-lamarka-200"
+              className="w-full pl-12 pr-4 py-3 rounded-2xl border border-lamarka-200 text-xl font-serif font-bold text-lamarka-900 focus:outline-none focus:border-lamarka-600 focus:ring-2 focus:ring-lamarka-200 bg-white shadow-2xs transition-all placeholder:text-lamarka-300"
               autoFocus
             />
           </div>
@@ -175,8 +185,8 @@ export function SaleForm({
 
         {/* Opção de Resgate de Saldo */}
         {availableBalance > 0 && (
-          <div className="p-4 rounded-2xl bg-lamarka-50/70 border border-lamarka-200/80 flex flex-col gap-3">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
+          <div className="p-4 sm:p-4.5 rounded-2xl bg-lamarka-50/80 border border-lamarka-200/90 flex flex-col gap-3 shadow-2xs">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={useCashback}
@@ -184,13 +194,13 @@ export function SaleForm({
                 className="w-4 h-4 rounded text-lamarka-800 focus:ring-lamarka-400"
               />
               <span className="text-xs font-semibold text-lamarka-900 flex items-center gap-1.5">
-                <Coins className="w-3.5 h-3.5 text-lamarka-600" />
+                <Coins className="w-3.5 h-3.5 text-lamarka-600" strokeWidth={1.5} />
                 Deseja utilizar cashback nesta compra? (Saldo: R$ {availableBalance.toFixed(2)})
               </span>
             </label>
 
             {useCashback && (
-              <div className="pt-2 border-t border-lamarka-200/60 flex items-center gap-3">
+              <div className="pt-2.5 border-t border-lamarka-200/70 flex items-center gap-3">
                 <span className="text-xs text-lamarka-700 whitespace-nowrap">
                   Valor a abater:
                 </span>
@@ -203,7 +213,7 @@ export function SaleForm({
                     value={redeemAmount}
                     onChange={(e) => setRedeemAmount(e.target.value)}
                     placeholder="0,00"
-                    className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-lamarka-300 text-xs font-bold text-lamarka-900 focus:outline-none focus:border-lamarka-500"
+                    className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-lamarka-300 text-xs font-bold text-lamarka-900 focus:outline-none focus:border-lamarka-600 bg-white shadow-2xs"
                   />
                 </div>
                 <button
@@ -213,7 +223,7 @@ export function SaleForm({
                       Math.min(availableBalance, numPurchase > 0 ? numPurchase : availableBalance).toFixed(2)
                     )
                   }
-                  className="px-2.5 py-1.5 rounded-lg bg-lamarka-200 hover:bg-lamarka-300 text-lamarka-800 text-[11px] font-semibold"
+                  className="px-3 py-1.5 rounded-xl bg-lamarka-200 hover:bg-lamarka-300 text-lamarka-800 text-[11px] font-semibold transition-colors shadow-2xs"
                 >
                   Usar Máximo
                 </button>
@@ -224,22 +234,22 @@ export function SaleForm({
 
         {/* Resumo da Operação */}
         {numPurchase > 0 && (
-          <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 flex items-center justify-between">
+          <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 flex items-center justify-between shadow-2xs">
             <div>
-              <span className="text-[11px] font-medium text-emerald-800 block">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 block">
                 Valor a Pagar no Caixa:
               </span>
-              <span className="text-lg font-bold text-emerald-950">
+              <span className="text-xl sm:text-2xl font-serif font-bold text-emerald-950">
                 R$ {netPayable.toFixed(2)}
               </span>
             </div>
 
             <div className="text-right">
-              <span className="text-[11px] font-medium text-emerald-800 block">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 block">
                 Novo Cashback a Ganhar:
               </span>
-              <span className="text-base font-bold text-emerald-700 flex items-center gap-1 justify-end">
-                <Sparkles className="w-3.5 h-3.5" />
+              <span className="text-base sm:text-lg font-serif font-bold text-emerald-700 flex items-center gap-1 justify-end">
+                <Sparkles className="w-3.5 h-3.5 text-[#DFB76C]" />
                 + R$ {estimatedCashback.toFixed(2)}
               </span>
             </div>
@@ -248,9 +258,9 @@ export function SaleForm({
 
         {/* Seleção de Vendedora */}
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-[11px] font-semibold text-lamarka-700 flex items-center gap-1">
-              <UserCheck className="w-3.5 h-3.5 text-lamarka-600" />
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-lamarka-700 flex items-center gap-1.5">
+              <UserCheck className="w-3.5 h-3.5 text-lamarka-600" strokeWidth={1.5} />
               Vendedora Responsável:
             </label>
             <a
@@ -266,7 +276,7 @@ export function SaleForm({
             <select
               value={operatorName}
               onChange={(e) => setOperatorName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-lamarka-200 text-xs font-semibold text-lamarka-900 bg-white focus:outline-none focus:border-lamarka-500 focus:ring-2 focus:ring-lamarka-200 shadow-2xs"
+              className="w-full px-4 py-2.5 rounded-2xl border border-lamarka-200 text-xs font-semibold text-lamarka-900 bg-white focus:outline-none focus:border-lamarka-600 focus:ring-2 focus:ring-lamarka-200 shadow-2xs"
             >
               <option value="Balcão / Caixa Geral">Balcão / Caixa Geral</option>
               {sellers.map((s) => (
@@ -281,9 +291,9 @@ export function SaleForm({
         <button
           type="submit"
           disabled={submitting || numPurchase <= 0}
-          className="w-full py-3.5 px-6 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md mt-2"
+          className="w-full py-4 px-6 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-luxury hover:shadow-luxury-lg mt-2"
         >
-          <ShoppingBag className="w-4 h-4" />
+          <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
           {submitting ? 'Lançando Venda...' : 'Finalizar Venda & Conceder Cashback'}
         </button>
       </form>

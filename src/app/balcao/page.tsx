@@ -33,17 +33,17 @@ export default function BalcaoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-lamarka-50 text-lamarka-900 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-lamarka-100/40 via-lamarka-50 to-white text-lamarka-900 flex flex-col">
       {/* Top Header */}
-      <header className="bg-white border-b border-lamarka-200/90 px-4 sm:px-8 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-        <div className="flex items-center gap-3">
+      <header className="bg-white/90 backdrop-blur-md border-b border-lamarka-200/90 px-4 sm:px-8 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-card">
+        <div className="flex items-center gap-3.5">
           <Link
             href="/"
-            className="p-2 rounded-xl text-lamarka-500 hover:text-lamarka-800 hover:bg-lamarka-100 transition-colors"
+            className="p-2 rounded-xl text-lamarka-500 hover:text-lamarka-900 hover:bg-lamarka-100 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
           </Link>
-          <div className="w-10 h-10 relative rounded-xl overflow-hidden border border-lamarka-200 shrink-0">
+          <div className="w-10 h-10 relative rounded-xl overflow-hidden border border-lamarka-200 shrink-0 shadow-2xs">
             <Image
               src="/logo.png"
               alt="La Marka"
@@ -53,20 +53,20 @@ export default function BalcaoPage() {
             />
           </div>
           <div>
-            <h1 className="text-base font-serif font-bold text-lamarka-900 leading-tight">
+            <h1 className="text-base font-serif font-medium text-lamarka-900 leading-tight">
               La Marka Club • Balcão
             </h1>
             <span className="text-[11px] text-lamarka-600 font-light flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-lamarka-500" /> Atendimento de Caixa
+              <Sparkles className="w-3 h-3 text-[#DFB76C]" /> Frente de Caixa & Fidelização
             </span>
           </div>
         </div>
 
         <Link
           href="/admin"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-lamarka-200 text-xs text-lamarka-700 hover:bg-lamarka-100 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-lamarka-200 bg-white hover:bg-lamarka-50 text-xs font-medium text-lamarka-800 transition-all shadow-2xs hover:shadow-xs"
         >
-          <ShieldCheck className="w-3.5 h-3.5 text-lamarka-600" />
+          <ShieldCheck className="w-4 h-4 text-lamarka-700" strokeWidth={1.5} />
           Painel de Gestão
         </Link>
       </header>

@@ -47,8 +47,8 @@ export function AdminSidebar() {
   return (
     <aside className="w-64 bg-white border-r border-lamarka-200/90 flex flex-col shrink-0 min-h-screen">
       {/* Brand Header */}
-      <div className="p-5 border-b border-lamarka-100 flex items-center gap-3">
-        <div className="w-10 h-10 relative rounded-xl overflow-hidden border border-lamarka-200 shrink-0">
+      <div className="p-5 border-b border-lamarka-100 flex items-center gap-3.5">
+        <div className="w-10 h-10 relative rounded-xl overflow-hidden border border-lamarka-200 shrink-0 shadow-2xs">
           <Image
             src="/logo.png"
             alt="La Marka"
@@ -58,11 +58,11 @@ export function AdminSidebar() {
           />
         </div>
         <div>
-          <h2 className="text-sm font-serif font-bold text-lamarka-900 leading-tight">
+          <h2 className="text-base font-serif font-medium text-lamarka-900 leading-tight">
             La Marka Club
           </h2>
-          <span className="text-[11px] text-lamarka-600 font-light flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-lamarka-500" /> Painel de Gestão
+          <span className="text-[10px] text-lamarka-600 font-light flex items-center gap-1 uppercase tracking-wider">
+            <Sparkles className="w-3 h-3 text-[#DFB76C]" /> Painel de Gestão
           </span>
         </div>
       </div>
@@ -79,10 +79,10 @@ export function AdminSidebar() {
               className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
                 isActive
                   ? 'bg-lamarka-800 text-white shadow-xs'
-                  : 'text-lamarka-700 hover:bg-lamarka-100 hover:text-lamarka-900'
+                  : 'text-lamarka-700 hover:bg-lamarka-50 hover:text-lamarka-950'
               }`}
             >
-              <Icon className="w-4 h-4 shrink-0" />
+              <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
               {item.label}
             </Link>
           );
@@ -93,9 +93,9 @@ export function AdminSidebar() {
       <div className="p-4 border-t border-lamarka-100 flex flex-col gap-2">
         <Link
           href="/balcao"
-          className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-xl bg-lamarka-50 hover:bg-lamarka-100 text-lamarka-800 text-xs font-semibold border border-lamarka-200/80 transition-colors"
+          className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-xl bg-lamarka-50 hover:bg-lamarka-100/80 text-lamarka-800 text-xs font-semibold border border-lamarka-200/80 transition-colors shadow-2xs"
         >
-          <Store className="w-4 h-4" />
+          <Store className="w-4 h-4" strokeWidth={1.5} />
           Ir para Frente de Caixa
         </Link>
 
@@ -104,7 +104,7 @@ export function AdminSidebar() {
           onClick={handleLogout}
           className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl text-rose-700 hover:bg-rose-50 text-xs font-medium transition-colors"
         >
-          <LogOut className="w-3.5 h-3.5" />
+          <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
           Sair do Painel
         </button>
       </div>

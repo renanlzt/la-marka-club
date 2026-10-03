@@ -84,10 +84,10 @@ export default function AdminConciliacaoPage() {
     <div className="p-6 sm:p-8 flex flex-col gap-6 max-w-6xl mx-auto w-full">
       {/* Header */}
       <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-lamarka-200/80 text-lamarka-800 text-xs font-semibold uppercase tracking-wider mb-2">
-          <FileCheck2 className="w-3.5 h-3.5 text-lamarka-600" /> Auditoria & Conciliação
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-lamarka-200/80 text-lamarka-800 text-[10px] font-semibold uppercase tracking-[0.18em] mb-2 border border-lamarka-300/50">
+          <FileCheck2 className="w-3 h-3 text-[#DFB76C]" /> Auditoria & Conciliação
         </div>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-lamarka-900">
+        <h1 className="text-3xl sm:text-4xl font-serif font-medium text-lamarka-900 tracking-tight">
           Conciliação Independente de Vendas
         </h1>
         <p className="text-xs sm:text-sm text-lamarka-600 font-light mt-1">
@@ -96,15 +96,15 @@ export default function AdminConciliacaoPage() {
       </div>
 
       {/* Caixa de Importação */}
-      <div className="bg-white rounded-3xl border border-lamarka-200/90 p-6 shadow-sm flex flex-col gap-4">
+      <div className="bg-white rounded-3xl border border-lamarka-200/90 p-6 sm:p-7 shadow-card flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-lamarka-800">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-lamarka-800">
             Importar Relatório de Vendas (CSV ou Texto de Cupons)
           </h2>
           <button
             type="button"
             onClick={handlePasteDemo}
-            className="text-xs text-lamarka-600 hover:text-lamarka-900 underline font-light"
+            className="text-xs text-lamarka-600 hover:text-lamarka-900 underline font-light transition-colors"
           >
             Colar dados de exemplo
           </button>
@@ -115,10 +115,10 @@ export default function AdminConciliacaoPage() {
           value={csvText}
           onChange={(e) => setCsvText(e.target.value)}
           placeholder="Cole aqui o conteúdo do relatório de vendas exportado (linhas com: Cupom;Data;Valor;Telefone;Cliente)..."
-          className="w-full p-4 rounded-2xl border border-lamarka-200 text-xs font-mono text-lamarka-900 focus:outline-none focus:border-lamarka-500 focus:ring-1 focus:ring-lamarka-400 bg-lamarka-50/40"
+          className="w-full p-4 rounded-2xl border border-lamarka-200 text-xs font-mono text-lamarka-900 focus:outline-none focus:border-lamarka-600 focus:ring-2 focus:ring-lamarka-200 bg-lamarka-50/40 shadow-2xs"
         />
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <span className="text-[11px] text-lamarka-500 font-light">
             Formato aceito: separado por ponto-e-vírgula (;) ou vírgula (,)
           </span>
@@ -126,9 +126,9 @@ export default function AdminConciliacaoPage() {
             type="button"
             onClick={handleProcess}
             disabled={loading || !csvText.trim()}
-            className="px-6 py-2.5 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-sm flex items-center gap-2"
+            className="px-6 py-3 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-luxury hover:shadow-luxury-lg flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <Upload className="w-3.5 h-3.5" />
+            <Upload className="w-4 h-4" strokeWidth={1.5} />
             {loading ? 'Processando Cruzamento...' : 'Processar Conciliação'}
           </button>
         </div>

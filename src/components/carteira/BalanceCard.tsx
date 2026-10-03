@@ -1,5 +1,5 @@
 import React from 'react';
-import { Coins, ArrowUpRight } from 'lucide-react';
+import { Sparkles, Crown, ArrowUpRight } from 'lucide-react';
 import { ExpirationBadge } from './ExpirationBadge';
 import { CustomerBalanceInfo } from '@/lib/fifo-engine';
 
@@ -9,33 +9,57 @@ interface BalanceCardProps {
 
 export function BalanceCard({ balanceInfo }: BalanceCardProps) {
   return (
-    <div className="w-full bg-gradient-to-br from-white via-white to-lamarka-50 border border-lamarka-200/90 rounded-3xl p-6 shadow-sm relative overflow-hidden">
-      {/* Decorative background watermark */}
-      <div className="absolute -right-6 -bottom-6 w-32 h-32 border-8 border-lamarka-100 rounded-full opacity-40 pointer-events-none" />
+    <div className="w-full flex flex-col gap-3">
+      {/* Luxury VIP Membership Card */}
+      <div className="w-full rounded-3xl p-6 sm:p-7 relative overflow-hidden shadow-luxury-lg bg-gradient-to-br from-[#5F3A36] via-[#4E2D2A] to-[#361D1B] border border-[#DFB76C]/30 text-white transition-all">
+        {/* Subtle decorative background watermarks & glows */}
+        <div className="absolute -right-12 -top-12 w-48 h-48 bg-[#DFB76C]/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-xl pointer-events-none" />
+        <div className="absolute right-0 bottom-0 w-32 h-32 border border-[#DFB76C]/10 rounded-full -mr-8 -mb-8 pointer-events-none" />
 
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium uppercase tracking-wider text-lamarka-700 flex items-center gap-1.5">
-          <Coins className="w-3.5 h-3.5 text-lamarka-500" />
-          Saldo Disponível
-        </span>
-        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 flex items-center gap-0.5">
-          <ArrowUpRight className="w-3 h-3" /> Em Reais (R$)
-        </span>
+        {/* Card Header: Brand & VIP Tag */}
+        <div className="flex items-center justify-between mb-6 relative z-10">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-[#DFB76C]/20 border border-[#DFB76C]/40 flex items-center justify-center">
+              <Crown className="w-3.5 h-3.5 text-[#DFB76C]" strokeWidth={1.5} />
+            </div>
+            <span className="font-serif tracking-[0.2em] text-xs font-semibold text-[#FAF6F5] uppercase">
+              La Marka Privilège
+            </span>
+          </div>
+
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full bg-[#DFB76C]/20 text-[#DFB76C] border border-[#DFB76C]/30 backdrop-blur-xs">
+            <Sparkles className="w-2.5 h-2.5" />
+            Vip Member
+          </span>
+        </div>
+
+        {/* Card Body: Balance Amount */}
+        <div className="relative z-10 my-2">
+          <span className="text-[11px] font-medium tracking-[0.15em] uppercase text-lamarka-200 block mb-1">
+            Saldo Disponível em Carteira
+          </span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-serif text-[#DFB76C] font-normal">
+              R$
+            </span>
+            <span className="text-5xl sm:text-6xl font-serif font-semibold tracking-tight text-white">
+              {balanceInfo.availableBalance.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+          </div>
+        </div>
+
+        {/* Card Footer: Usage Note */}
+        <div className="relative z-10 pt-4 mt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-lamarka-200 font-light">
+          <span>Abatimento direto no caixa</span>
+          <span className="text-[#DFB76C] font-medium flex items-center gap-0.5">
+            1 crédito = R$ 1,00
+          </span>
+        </div>
       </div>
-
-      <div className="flex items-baseline gap-1 my-1">
-        <span className="text-xl font-serif text-lamarka-600 font-normal">R$</span>
-        <span className="text-4xl sm:text-5xl font-serif font-bold text-lamarka-900 tracking-tight">
-          {balanceInfo.availableBalance.toLocaleString('pt-BR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </span>
-      </div>
-
-      <p className="text-xs text-lamarka-600 font-light mt-1">
-        Utilizável como abatimento direto em suas próximas compras na loja.
-      </p>
 
       {/* Alerta de Expiração */}
       <ExpirationBadge

@@ -198,10 +198,10 @@ export default function AdminClientesPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-lamarka-200/80 text-lamarka-800 text-xs font-semibold uppercase tracking-wider mb-2">
-            <Users className="w-3.5 h-3.5 text-lamarka-600" /> Base de Clientes
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-lamarka-200/80 text-lamarka-800 text-[10px] font-semibold uppercase tracking-[0.18em] mb-2 border border-lamarka-300/50">
+            <Users className="w-3 h-3 text-[#DFB76C]" /> Base de Clientes
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-lamarka-900">
+          <h1 className="text-3xl sm:text-4xl font-serif font-medium text-lamarka-900 tracking-tight">
             Clientes & Carteiras Digitais
           </h1>
           <p className="text-xs sm:text-sm text-lamarka-600 font-light mt-1">
@@ -211,20 +211,20 @@ export default function AdminClientesPage() {
 
         <Link
           href="/balcao"
-          className="inline-flex items-center gap-2 self-start sm:self-auto px-4 py-2.5 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-sm transition-colors"
+          className="inline-flex items-center gap-2 self-start sm:self-auto px-4.5 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-luxury hover:shadow-luxury-lg transition-all"
         >
-          <Sparkles className="w-4 h-4 text-lamarka-300" />
+          <Sparkles className="w-4 h-4 text-[#DFB76C]" strokeWidth={1.5} />
           Novo Cadastro no Balcão
         </Link>
       </div>
 
       {/* Cards de Métricas */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-lamarka-200/90 shadow-2xs">
-          <span className="text-[11px] text-lamarka-500 font-medium uppercase tracking-wider block mb-1">
+        <div className="bg-white p-5 rounded-3xl border border-lamarka-200/90 shadow-card">
+          <span className="text-[10px] text-lamarka-500 font-semibold uppercase tracking-[0.15em] block mb-1">
             Total Cadastradas
           </span>
-          <div className="text-xl sm:text-2xl font-serif font-bold text-lamarka-900">
+          <div className="text-2xl sm:text-3xl font-serif font-semibold text-lamarka-900">
             {metrics.totalCount}
           </div>
           <span className="text-[11px] text-lamarka-500 font-light">
@@ -232,11 +232,11 @@ export default function AdminClientesPage() {
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-lamarka-200/90 shadow-2xs">
-          <span className="text-[11px] text-lamarka-500 font-medium uppercase tracking-wider block mb-1">
+        <div className="bg-white p-5 rounded-3xl border border-lamarka-200/90 shadow-card">
+          <span className="text-[10px] text-lamarka-500 font-semibold uppercase tracking-[0.15em] block mb-1">
             Saldo em Circulação
           </span>
-          <div className="text-xl sm:text-2xl font-serif font-bold text-lamarka-800">
+          <div className="text-2xl sm:text-3xl font-serif font-semibold text-lamarka-800">
             R$ {formatBRL(metrics.totalBalance)}
           </div>
           <span className="text-[11px] text-lamarka-500 font-light">
@@ -244,11 +244,11 @@ export default function AdminClientesPage() {
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-lamarka-200/90 shadow-2xs">
-          <span className="text-[11px] text-lamarka-500 font-medium uppercase tracking-wider block mb-1">
+        <div className="bg-white p-5 rounded-3xl border border-lamarka-200/90 shadow-card">
+          <span className="text-[10px] text-lamarka-500 font-semibold uppercase tracking-[0.15em] block mb-1">
             Com Saldo Ativo
           </span>
-          <div className="text-xl sm:text-2xl font-serif font-bold text-emerald-800">
+          <div className="text-2xl sm:text-3xl font-serif font-semibold text-emerald-800">
             {metrics.withBalanceCount}
           </div>
           <span className="text-[11px] text-lamarka-500 font-light">
@@ -256,11 +256,11 @@ export default function AdminClientesPage() {
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-lamarka-200/90 shadow-2xs">
-          <span className="text-[11px] text-lamarka-500 font-medium uppercase tracking-wider block mb-1">
+        <div className="bg-white p-5 rounded-3xl border border-lamarka-200/90 shadow-card">
+          <span className="text-[10px] text-lamarka-500 font-semibold uppercase tracking-[0.15em] block mb-1">
             Aniversariantes
           </span>
-          <div className="text-xl sm:text-2xl font-serif font-bold text-amber-800">
+          <div className="text-2xl sm:text-3xl font-serif font-semibold text-amber-800">
             {metrics.birthdaysCount}
           </div>
           <span className="text-[11px] text-lamarka-500 font-light">
@@ -481,12 +481,12 @@ export default function AdminClientesPage() {
                         type="button"
                         onClick={() => handleCopyLink(c.magicToken)}
                         title="Copiar link da carteira digital"
-                        className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors"
+                        className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs"
                       >
                         {copiedToken === c.magicToken ? (
-                          <Check className="w-4 h-4 text-emerald-600" />
+                          <Check className="w-4 h-4 text-emerald-600" strokeWidth={1.5} />
                         ) : (
-                          <Copy className="w-4 h-4" />
+                          <Copy className="w-4 h-4" strokeWidth={1.5} />
                         )}
                       </button>
 
@@ -496,29 +496,29 @@ export default function AdminClientesPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Conversar no WhatsApp"
-                        className="p-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors"
+                        className="p-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs"
                       >
-                        <MessageCircle className="w-4 h-4" />
+                        <MessageCircle className="w-4 h-4" strokeWidth={1.5} />
                       </a>
 
                       {/* Botão Ver Carteira Digital */}
                       <Link
                         href={`/c/${c.magicToken}`}
                         target="_blank"
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-2xs transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-2xs hover:shadow-xs transition-all"
                       >
-                        <Wallet className="w-3.5 h-3.5 text-lamarka-300" />
+                        <Wallet className="w-3.5 h-3.5 text-[#DFB76C]" strokeWidth={1.5} />
                         <span>Ver Carteira</span>
-                        <ExternalLink className="w-3 h-3 text-lamarka-400" />
+                        <ExternalLink className="w-3 h-3 text-lamarka-300" strokeWidth={1.5} />
                       </Link>
 
                       {/* Botão Ajustar Saldo */}
                       <Link
                         href={`/admin/ajustes?customerId=${c.id}`}
                         title="Ajustar saldo manualmente"
-                        className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors"
+                        className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs"
                       >
-                        <Sliders className="w-4 h-4" />
+                        <Sliders className="w-4 h-4" strokeWidth={1.5} />
                       </Link>
 
                       {/* Botão Tornar/Remover Vendedora */}
@@ -531,13 +531,13 @@ export default function AdminClientesPage() {
                             ? 'Remover status de vendedora desta cliente'
                             : 'Marcar esta cliente como vendedora da loja'
                         }
-                        className={`p-2 rounded-xl border text-xs font-medium transition-colors ${
+                        className={`p-2 rounded-xl border text-xs font-medium transition-colors shadow-2xs ${
                           c.isSeller
                             ? 'border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100'
                             : 'border-lamarka-200 text-lamarka-500 hover:bg-lamarka-100 hover:text-lamarka-800'
                         }`}
                       >
-                        <UserCheck className="w-4 h-4" />
+                        <UserCheck className="w-4 h-4" strokeWidth={1.5} />
                       </button>
                     </div>
                   </div>

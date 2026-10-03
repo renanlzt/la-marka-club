@@ -53,7 +53,7 @@ export default async function CustomerWalletPage({
   const { customer, balanceInfo, transactions } = walletData;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-lamarka-100/50 via-lamarka-50 to-white flex flex-col items-center pb-12 px-4 sm:px-6">
+    <main className="min-h-screen bg-gradient-to-b from-lamarka-100/70 via-lamarka-50 to-white flex flex-col items-center pb-16 px-4 sm:px-6">
       <div className="w-full max-w-md flex flex-col items-center">
         {/* Cabeçalho */}
         <WalletHeader
@@ -61,14 +61,16 @@ export default async function CustomerWalletPage({
           maskedPhone={customer.maskedPhone}
         />
 
-        {/* Card de Saldo em Destaque */}
+        {/* Card de Saldo VIP em Destaque */}
         <BalanceCard balanceInfo={balanceInfo} />
 
         {/* Informações da Loja & Como Usar */}
-        <div className="w-full mt-4 bg-white/70 backdrop-blur-sm border border-lamarka-200/70 rounded-2xl p-4 text-xs text-lamarka-700 flex items-start gap-3">
-          <Store className="w-4 h-4 text-lamarka-600 shrink-0 mt-0.5" />
-          <p className="leading-relaxed">
-            Seu cashback é um benefício exclusivo da <strong>La Marka</strong>. Basta informar seu telefone no caixa para utilizar seu saldo em sua próxima compra!
+        <div className="w-full mt-3 bg-white/80 backdrop-blur-md border border-lamarka-200/80 rounded-3xl p-4.5 text-xs text-lamarka-700 flex items-start gap-3.5 shadow-card">
+          <div className="w-8 h-8 rounded-xl bg-lamarka-100 flex items-center justify-center shrink-0 text-lamarka-700">
+            <Store className="w-4 h-4" strokeWidth={1.5} />
+          </div>
+          <p className="leading-relaxed font-light text-lamarka-800 pt-0.5">
+            Seu cashback é um benefício exclusivo da <strong className="font-semibold text-lamarka-900">La Marka</strong>. Basta informar seu telefone no balcão da loja para abater seu saldo direto na sua próxima compra!
           </p>
         </div>
 
@@ -76,8 +78,8 @@ export default async function CustomerWalletPage({
         <TransactionHistory transactions={transactions} />
 
         {/* Rodapé da Carteira */}
-        <footer className="mt-8 text-center text-[11px] text-lamarka-500 font-light flex items-center justify-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-lamarka-400" />
+        <footer className="mt-10 text-center text-[11px] text-lamarka-500 font-light flex items-center justify-center gap-1.5 tracking-wider uppercase">
+          <Sparkles className="w-3.5 h-3.5 text-[#DFB76C]" />
           La Marka Club • Moda Feminina
         </footer>
       </div>

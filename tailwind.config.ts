@@ -25,8 +25,19 @@ const config: Config = {
         },
       },
       fontFamily: {
-        serif: ['var(--font-serif)', 'Playfair Display', 'Georgia', 'serif'],
+        serif: ['var(--font-serif)', 'Cormorant Garamond', 'Playfair Display', 'serif'],
         sans: ['var(--font-sans)', 'Plus Jakarta Sans', 'Inter', 'sans-serif'],
+      },
+      boxShadow: {
+        'luxury': '0 12px 36px -4px rgba(95, 58, 54, 0.08), 0 4px 12px -2px rgba(95, 58, 54, 0.03)',
+        'luxury-lg': '0 20px 48px -6px rgba(95, 58, 54, 0.12), 0 8px 16px -2px rgba(95, 58, 54, 0.05)',
+        'card': '0 2px 8px -1px rgba(95, 58, 54, 0.05), 0 1px 4px -1px rgba(95, 58, 54, 0.02)',
+        'card-hover': '0 8px 24px -2px rgba(95, 58, 54, 0.08), 0 2px 6px -1px rgba(95, 58, 54, 0.04)',
+        'glow-gold': '0 0 24px -2px rgba(223, 183, 108, 0.25)',
+      },
+      borderColor: {
+        'luxury-subtle': 'rgba(95, 58, 54, 0.08)',
+        'luxury-gold': 'rgba(223, 183, 108, 0.3)',
       },
     },
   },

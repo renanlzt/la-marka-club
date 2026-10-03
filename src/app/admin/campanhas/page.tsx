@@ -57,12 +57,12 @@ export default function AdminCampanhasPage() {
 
   return (
     <div className="p-6 sm:p-8 flex flex-col gap-6 max-w-5xl mx-auto w-full">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-lamarka-200/80 text-lamarka-800 text-xs font-semibold uppercase tracking-wider mb-2">
-            <Megaphone className="w-3.5 h-3.5 text-lamarka-600" /> Vendas & Campanhas
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-lamarka-200/80 text-lamarka-800 text-[10px] font-semibold uppercase tracking-[0.18em] mb-2 border border-lamarka-300/50">
+            <Megaphone className="w-3 h-3 text-[#DFB76C]" /> Vendas & Campanhas
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-lamarka-900">
+          <h1 className="text-3xl sm:text-4xl font-serif font-medium text-lamarka-900 tracking-tight">
             Campanhas Especiais
           </h1>
           <p className="text-xs sm:text-sm text-lamarka-600 font-light mt-1">
@@ -72,16 +72,16 @@ export default function AdminCampanhasPage() {
 
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold flex items-center gap-2 shadow-sm transition-all"
+          className="self-start sm:self-auto px-4.5 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold flex items-center gap-2 shadow-luxury hover:shadow-luxury-lg transition-all"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4" strokeWidth={1.5} />
           Nova Campanha
         </button>
       </div>
 
       {/* Lista de Campanhas */}
-      <div className="bg-white rounded-3xl border border-lamarka-200/90 p-6 shadow-sm">
-        <h2 className="text-base font-serif font-bold text-lamarka-900 mb-4">
+      <div className="bg-white rounded-3xl border border-lamarka-200/90 p-6 sm:p-7 shadow-card">
+        <h2 className="text-base font-serif font-medium text-lamarka-900 mb-4">
           Campanhas Cadastradas
         </h2>
 
