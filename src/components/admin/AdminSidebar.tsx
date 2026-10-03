@@ -13,10 +13,12 @@ import {
   Settings,
   Store,
   Sparkles,
+  Users,
 } from 'lucide-react';
 
 const menuItems = [
   { href: '/admin/dashboard', label: 'Visão Geral & KPIs', icon: LayoutDashboard },
+  { href: '/admin/clientes', label: 'Clientes & Carteiras', icon: Users },
   { href: '/admin/campanhas', label: 'Campanhas Especiais', icon: Megaphone },
   { href: '/admin/aniversarios', label: 'Aniversariantes', icon: Gift },
   { href: '/admin/conciliacao', label: 'Conciliação de Cupons', icon: FileCheck2 },

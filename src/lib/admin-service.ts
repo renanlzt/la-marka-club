@@ -1,5 +1,6 @@
 import { prisma } from './db';
 import { DEFAULT_TEMPLATES } from './whatsapp';
+import { CustomerBalanceInfo } from './fifo-engine';
 
 export interface DashboardStats {
   totalCustomers: number;
@@ -176,3 +177,126 @@ export async function resetMessageTemplate(id: string) {
     },
   });
 }
+
+export interface CustomerAdminSummary {
+  id: string;
+  name: string;
+  phone: string;
+  cpf: string | null;
+  birthDay: number | null;
+  birthMonth: number | null;
+  notes: string | null;
+  magicToken: string;
+  createdAt: Date;
+  balanceInfo: CustomerBalanceInfo;
+  stats: {
+    totalEarned: number;
+    totalRedeemed: number;
+    totalPurchases: number;
+  };
+}
+
+/**
+ * Lista clientes cadastrados com saldo em tempo real, vencimentos e histórico resumido
+ */
+export async function getAllCustomersWithBalance(query?: string): Promise<CustomerAdminSummary[]> {
+  const now = new Date();
+
+  let where: any = {};
+  if (query && query.trim()) {
+    const q = query.trim();
+    const digits = q.replace(/\D/g, '');
+    const conditions: any[] = [{ name: { contains: q } }];
+    if (digits.length >= 3 && /^[0-9()+\-\s.]+$/.test(q)) {
+      conditions.push({ phone: { contains: digits } });
+      conditions.push({ cpf: { contains: digits } });
+    } else if (digits.length >= 8) {
+      conditions.push({ phone: { contains: digits } });
+      conditions.push({ cpf: { contains: digits } });
+    }
+    where = { OR: conditions };
+  }
+
+  const customers = await prisma.customer.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const activeCredits = await prisma.cashbackCredit.findMany({
+    where: {
+      status: 'ACTIVE',
+      expiresAt: { gt: now },
+      currentBalance: { gt: 0 },
+    },
+    orderBy: { expiresAt: 'asc' },
+  });
+
+  const creditsByCustomer = new Map<string, typeof activeCredits>();
+  for (const c of activeCredits) {
+    const list = creditsByCustomer.get(c.customerId) || [];
+    list.push(c);
+    creditsByCustomer.set(c.customerId, list);
+  }
+
+  const txs = await prisma.cashbackTransaction.findMany({
+    select: { customerId: true, type: true, amount: true },
+  });
+
+  const txsByCustomer = new Map<string, { totalEarned: number; totalRedeemed: number; totalPurchases: number }>();
+  for (const t of txs) {
+    const s = txsByCustomer.get(t.customerId) || { totalEarned: 0, totalRedeemed: 0, totalPurchases: 0 };
+    if (t.type === 'EARN') {
+      s.totalEarned += Math.max(0, t.amount);
+      s.totalPurchases += 1;
+    } else if (t.type === 'REDEEM' || t.type === 'MANUAL_SUBTRACT') {
+      s.totalRedeemed += Math.abs(t.amount);
+    } else if (t.type === 'MANUAL_ADD' || t.type === 'BIRTHDAY') {
+      s.totalEarned += Math.max(0, t.amount);
+    }
+    txsByCustomer.set(t.customerId, s);
+  }
+
+  return customers.map((cust) => {
+    const custCredits = creditsByCustomer.get(cust.id) || [];
+    const availableBalance = Number(
+      custCredits.reduce((acc, c) => acc + c.currentBalance, 0).toFixed(2)
+    );
+    const firstExpiring = custCredits[0];
+    let expiringAmount = 0;
+    let expiringInDays: number | null = null;
+    let nextExpirationDate: Date | null = null;
+
+    if (firstExpiring) {
+      expiringAmount = Number(firstExpiring.currentBalance.toFixed(2));
+      nextExpirationDate = firstExpiring.expiresAt;
+      const diffTime = firstExpiring.expiresAt.getTime() - now.getTime();
+      expiringInDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    }
+
+    const s = txsByCustomer.get(cust.id) || { totalEarned: 0, totalRedeemed: 0, totalPurchases: 0 };
+
+    return {
+      id: cust.id,
+      name: cust.name,
+      phone: cust.phone,
+      cpf: cust.cpf,
+      birthDay: cust.birthDay,
+      birthMonth: cust.birthMonth,
+      notes: cust.notes,
+      magicToken: cust.magicToken,
+      createdAt: cust.createdAt,
+      balanceInfo: {
+        availableBalance,
+        expiringAmount,
+        expiringInDays,
+        nextExpirationDate,
+      },
+      stats: {
+        totalEarned: Number(s.totalEarned.toFixed(2)),
+        totalRedeemed: Number(s.totalRedeemed.toFixed(2)),
+        totalPurchases: s.totalPurchases,
+      },
+    };
+  });
+}
+
