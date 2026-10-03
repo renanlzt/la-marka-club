@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #C59B94;
+  --primary-dark: #5F3A36;
+  --bg-cream: #FAF6F5;
+}
+
+body {
+  background-color: #FAF6F5;
+  color: #2D2322;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+}
