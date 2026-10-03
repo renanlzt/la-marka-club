@@ -6,6 +6,7 @@ import {
   CustomerBalanceInfo,
 } from './fifo-engine';
 import { formatWhatsAppMessage, generateWhatsAppLink } from './whatsapp';
+import { getActiveCampaign } from './campaigns-service';
 import { nanoid } from 'nanoid';
 
 export interface CounterCustomerSummary {
@@ -125,6 +126,10 @@ export async function processCounterSale(data: {
 }): Promise<CounterSaleResult> {
   const { customerId, purchaseAmount, redeemAmount = 0, operatorName = 'Caixa' } = data;
 
+  if (redeemAmount > purchaseAmount) {
+    throw new Error('O valor de resgate não pode ser maior que o valor da compra.');
+  }
+
   const customer = await prisma.customer.findUnique({
     where: { id: customerId },
   });
@@ -148,7 +153,8 @@ export async function processCounterSale(data: {
   // 3. Concede novo cashback sobre o valor líquido pago
   let cashbackEarned = 0;
   if (netAmountToPay > 0) {
-    const earnRes = await grantCashback(customerId, netAmountToPay, operatorName);
+    const activeCampaign = await getActiveCampaign();
+    const earnRes = await grantCashback(customerId, netAmountToPay, operatorName, activeCampaign?.id);
     cashbackEarned = earnRes.credit.initialAmount;
   }
 

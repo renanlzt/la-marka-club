@@ -128,7 +128,8 @@ export async function matchSalesWithClub(
       if (sale.customerPhone && c.customer.phone) {
         const cleanSalePhone = sale.customerPhone.replace(/\D/g, '');
         const cleanClubPhone = c.customer.phone.replace(/\D/g, '');
-        if (cleanSalePhone === cleanClubPhone && isSameAmount) return true;
+        if (cleanSalePhone !== cleanClubPhone) return false;
+        return isSameAmount;
       }
 
       // Se não tem telefone, confere se bate valor

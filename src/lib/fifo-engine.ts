@@ -28,44 +28,52 @@ export async function expireOutdatedCredits(customerId?: string): Promise<number
 
   if (expiredLots.length === 0) return 0;
 
+  // Agrupa os lotes por customerId para garantir balanceAfter sequencial e preciso
+  const lotsByCustomer = new Map<string, typeof expiredLots>();
   for (const lot of expiredLots) {
+    const list = lotsByCustomer.get(lot.customerId) || [];
+    list.push(lot);
+    lotsByCustomer.set(lot.customerId, list);
+  }
+
+  for (const [cId, customerLots] of lotsByCustomer.entries()) {
     await prisma.$transaction(async (tx) => {
-      const lostAmount = lot.currentBalance;
-
-      // Atualiza o lote para expirado e zera saldo
-      await tx.cashbackCredit.update({
-        where: { id: lot.id },
-        data: {
-          currentBalance: 0,
-          status: 'EXPIRED',
-        },
+      // 1. Calcula saldo total atual antes das expirações
+      const allActiveCredits = await tx.cashbackCredit.findMany({
+        where: { customerId: cId, status: 'ACTIVE', currentBalance: { gt: 0 } },
       });
-
-      // Recalcula saldo da cliente
-      const activeCredits = await tx.cashbackCredit.findMany({
-        where: {
-          customerId: lot.customerId,
-          status: 'ACTIVE',
-          expiresAt: { gt: now },
-        },
-      });
-      const newBalance = activeCredits.reduce(
-        (acc, c) => acc + c.currentBalance,
-        0
+      let runningBalance = Number(
+        allActiveCredits.reduce((acc, c) => acc + c.currentBalance, 0).toFixed(2)
       );
 
-      // Registra evento de auditoria no extrato
-      await tx.cashbackTransaction.create({
-        data: {
-          customerId: lot.customerId,
-          type: 'EXPIRE',
-          amount: -lostAmount,
-          balanceAfter: Number(newBalance.toFixed(2)),
-          description: `Cashback expirado (lote de R$ ${lot.initialAmount.toFixed(2)})`,
-          operatorName: 'Sistema (Expiração Automática)',
-          reason: 'Prazo de validade atingido',
-        },
-      });
+      for (const lot of customerLots) {
+        const lostAmount = lot.currentBalance;
+        if (lostAmount <= 0) continue;
+
+        // Atualiza o lote para expirado e zera saldo
+        await tx.cashbackCredit.update({
+          where: { id: lot.id },
+          data: {
+            currentBalance: 0,
+            status: 'EXPIRED',
+          },
+        });
+
+        runningBalance = Number(Math.max(0, runningBalance - lostAmount).toFixed(2));
+
+        // Registra evento de auditoria no extrato com balanceAfter matematicamente exato
+        await tx.cashbackTransaction.create({
+          data: {
+            customerId: cId,
+            type: 'EXPIRE',
+            amount: -lostAmount,
+            balanceAfter: runningBalance,
+            description: `Cashback expirado (lote de R$ ${lot.initialAmount.toFixed(2)})`,
+            operatorName: 'Sistema (Expiração Automática)',
+            reason: 'Prazo de validade atingido',
+          },
+        });
+      }
     });
   }
 
@@ -207,7 +215,12 @@ export async function grantCashback(
 export async function redeemCashback(
   customerId: string,
   redeemAmount: number,
-  operatorName = 'Balcão'
+  operatorName = 'Balcão',
+  options?: {
+    type?: string;
+    description?: string;
+    reason?: string;
+  }
 ) {
   if (redeemAmount <= 0) {
     throw new Error('O valor de resgate deve ser maior que zero.');
@@ -215,32 +228,33 @@ export async function redeemCashback(
 
   await expireOutdatedCredits(customerId);
 
-  const now = new Date();
-  const activeCredits = await prisma.cashbackCredit.findMany({
-    where: {
-      customerId,
-      status: 'ACTIVE',
-      expiresAt: { gt: now },
-      currentBalance: { gt: 0 },
-    },
-    orderBy: { expiresAt: 'asc' }, // FIFO: mais próximos do vencimento primeiro
-  });
-
-  const availableBalance = Number(
-    activeCredits
-      .reduce((acc, c) => acc + c.currentBalance, 0)
-      .toFixed(2)
-  );
-
-  if (redeemAmount > availableBalance) {
-    throw new Error(
-      `Saldo insuficiente para resgate. Disponível: R$ ${availableBalance.toFixed(
-        2
-      )}`
-    );
-  }
-
   return await prisma.$transaction(async (tx) => {
+    const now = new Date();
+    // Busca e bloqueio atômico dos lotes ativos dentro da transação
+    const activeCredits = await tx.cashbackCredit.findMany({
+      where: {
+        customerId,
+        status: 'ACTIVE',
+        expiresAt: { gt: now },
+        currentBalance: { gt: 0 },
+      },
+      orderBy: { expiresAt: 'asc' }, // FIFO
+    });
+
+    const availableBalance = Number(
+      activeCredits
+        .reduce((acc, c) => acc + c.currentBalance, 0)
+        .toFixed(2)
+    );
+
+    if (redeemAmount > availableBalance) {
+      throw new Error(
+        `Saldo insuficiente para resgate. Disponível: R$ ${availableBalance.toFixed(
+          2
+        )}`
+      );
+    }
+
     let remainingToDeduct = Number(redeemAmount.toFixed(2));
 
     for (const lot of activeCredits) {
@@ -279,11 +293,14 @@ export async function redeemCashback(
     await tx.cashbackTransaction.create({
       data: {
         customerId,
-        type: 'REDEEM',
+        type: options?.type || 'REDEEM',
         amount: -redeemAmount,
         balanceAfter: newBalance,
-        description: `Resgate de saldo na compra (R$ ${redeemAmount.toFixed(2)})`,
+        description:
+          options?.description ||
+          `Resgate de saldo na compra (R$ ${redeemAmount.toFixed(2)})`,
         operatorName,
+        reason: options?.reason,
       },
     });
 
@@ -410,7 +427,17 @@ export async function manualAdjustBalance(
       return { amount, newBalance };
     });
   } else {
-    // Débito manual
-    return await redeemCashback(customerId, Math.abs(amount), operatorName);
+    // Débito manual: registra como MANUAL_SUBTRACT com reason preservado
+    return await redeemCashback(
+      customerId,
+      Math.abs(amount),
+      operatorName,
+      {
+        type: 'MANUAL_SUBTRACT',
+        description: `Ajuste manual (- R$ ${Math.abs(amount).toFixed(2)})`,
+        reason,
+      }
+    );
   }
 }
+

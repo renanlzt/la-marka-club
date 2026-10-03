@@ -96,6 +96,10 @@ describe('Campaigns, Birthdays & Manual Adjustments', () => {
       where: { customerId },
     });
     expect(txs.some((t) => t.type === 'MANUAL_ADD')).toBe(true);
-    expect(txs.some((t) => t.type === 'REDEEM' && t.operatorName === 'Dieizy')).toBe(true);
+    expect(txs.some((t) => t.type === 'MANUAL_SUBTRACT' && t.operatorName === 'Dieizy')).toBe(true);
+  });
+
+  afterEach(async () => {
+    await prisma.campaign.deleteMany();
   });
 });
