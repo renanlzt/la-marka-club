@@ -1,0 +1,99 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Customer {
+  id           String            @id @default(cuid())
+  name         String
+  phone        String            @unique
+  cpf          String?
+  birthDay     Int?              // Dia do aniversário (1-31)
+  birthMonth   Int?              // Mês do aniversário (1-12)
+  magicToken   String            @unique // Token para acesso à carteira da cliente
+  notes        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  
+  credits      CashbackCredit[]
+  transactions CashbackTransaction[]
+}
+
+model CashbackCredit {
+  id             String       @id @default(cuid())
+  customerId     String
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  initialAmount  Float        // Valor original concedido (ex: 15.00)
+  currentBalance Float        // Saldo restante deste lote específico (ex: 10.00)
+  expiresAt      DateTime     // Data de expiração deste crédito
+  status         String       @default("ACTIVE") // ACTIVE, FULLY_USED, EXPIRED
+  origin         String       @default("PURCHASE") // PURCHASE, BIRTHDAY, CAMPAIGN, MANUAL_BONUS
+  purchaseValue  Float?       // Valor bruto da compra originária
+  campaignId     String?
+  campaign       Campaign?    @relation(fields: [campaignId], references: [id])
+  createdAt      DateTime     @default(now())
+}
+
+model CashbackTransaction {
+  id             String          @id @default(cuid())
+  customerId     String
+  customer       Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type           String          // EARN, REDEEM, EXPIRE, MANUAL_ADD, MANUAL_SUBTRACT, BIRTHDAY_GIFT
+  amount         Float           // Positivo (+) para créditos, negativo (-) para débitos
+  balanceAfter   Float           // Saldo total da cliente imediatamente após a transação
+  description    String          // Ex: "Compra de R$ 300,00", "Resgate em compra", "Bônus Aniversário"
+  operatorName   String?         // Nome da atendente ou Dieizy
+  reason         String?         // Justificativa para ajustes manuais
+  createdAt      DateTime        @default(now())
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  name        String         // Ex: "Semana da Cliente", "Outubro Rosa"
+  description String?
+  type        String         // PERCENTAGE_OVERRIDE, MULTIPLIER, FIXED_BONUS, MIN_PURCHASE_BONUS
+  value       Float          // Valor da regra (% ou valor fixo R$)
+  minPurchase Float?         // Valor mínimo de compra elegível
+  startsAt    DateTime
+  endsAt      DateTime
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  
+  credits     CashbackCredit[]
+}
+
+model StoreSetting {
+  id                         String   @id @default("default")
+  storeName                  String   @default("La Marka")
+  defaultCashbackPercentage  Float    @default(5.0) // 5%
+  defaultExpirationDays      Int      @default(45)  // 45 dias
+  birthdayBonusAmount        Float    @default(30.0)// R$ 30,00
+  birthdayBonusValidityDays  Int      @default(30)  // 30 dias de validade
+  birthdayBonusDaysBefore    Int      @default(7)   // Liberado 7 dias antes do aniversário
+  updatedAt                  DateTime @updatedAt
+}
+
+model MessageTemplate {
+  id           String   @id // EARN_PURCHASE, REDEEM, BIRTHDAY, EXPIRATION_ALERT
+  title        String
+  content      String   // Texto com tags ({primeiro_nome}, {cashback_ganho}, etc.)
+  isCustomized Boolean  @default(false)
+  updatedAt    DateTime @updatedAt
+}
+
+model SalesReconciliation {
+  id               String   @id @default(cuid())
+  saleIdentifier   String   // Código do cupom ou venda fiscal
+  saleDate         DateTime
+  grossAmount      Float
+  customerPhone    String?
+  customerName     String?
+  status           String   // MATCHED, CLUB_ONLY, ERP_ONLY
+  transactionId    String?
+  notes            String?
+  importedAt       DateTime @default(now())
+}
