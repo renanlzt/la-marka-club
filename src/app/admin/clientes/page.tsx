@@ -17,6 +17,7 @@ import {
   Copy,
   Check,
   User,
+  UserCheck,
   Clock,
   Filter,
 } from 'lucide-react';
@@ -30,6 +31,7 @@ interface CustomerSummary {
   birthMonth: number | null;
   notes: string | null;
   magicToken: string;
+  isSeller: boolean;
   createdAt: string;
   balanceInfo: {
     availableBalance: number;
@@ -48,9 +50,10 @@ export default function AdminClientesPage() {
   const [customers, setCustomers] = useState<CustomerSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'ALL' | 'WITH_BALANCE' | 'EXPIRING' | 'BIRTHDAYS'>('ALL');
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'WITH_BALANCE' | 'EXPIRING' | 'BIRTHDAYS' | 'SELLERS'>('ALL');
   const [sortBy, setSortBy] = useState<'RECENT' | 'BALANCE_DESC' | 'NAME_ASC' | 'PURCHASES_DESC'>('RECENT');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [togglingSellerId, setTogglingSellerId] = useState<string | null>(null);
 
   const fetchCustomers = async (query = '') => {
     setLoading(true);
@@ -77,6 +80,25 @@ export default function AdminClientesPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const handleToggleSeller = async (customerId: string, currentStatus: boolean) => {
+    setTogglingSellerId(customerId);
+    try {
+      const res = await fetch('/api/admin/clientes/vendedora', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId, isSeller: !currentStatus }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCustomers((prev) =>
+          prev.map((c) => (c.id === customerId ? { ...c, isSeller: data.isSeller } : c))
+        );
+      }
+    } finally {
+      setTogglingSellerId(null);
+    }
+  };
+
   const currentMonth = useMemo(() => new Date().getMonth() + 1, []);
 
   // Métricas agregadas
@@ -92,8 +114,9 @@ export default function AdminClientesPage() {
     const birthdaysCount = customers.filter(
       (c) => c.birthMonth === currentMonth
     ).length;
+    const sellersCount = customers.filter((c) => c.isSeller).length;
 
-    return { totalCount, totalBalance, withBalanceCount, birthdaysCount };
+    return { totalCount, totalBalance, withBalanceCount, birthdaysCount, sellersCount };
   }, [customers, currentMonth]);
 
   // Filtragem e ordenação
@@ -108,6 +131,8 @@ export default function AdminClientesPage() {
       );
     } else if (activeFilter === 'BIRTHDAYS') {
       result = result.filter((c) => c.birthMonth === currentMonth);
+    } else if (activeFilter === 'SELLERS') {
+      result = result.filter((c) => c.isSeller);
     }
 
     result.sort((a, b) => {
@@ -321,6 +346,17 @@ export default function AdminClientesPage() {
           >
             Aniversariantes do Mês ({metrics.birthdaysCount})
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveFilter('SELLERS')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              activeFilter === 'SELLERS'
+                ? 'bg-purple-800 text-white shadow-2xs'
+                : 'text-purple-700 hover:bg-purple-50'
+            }`}
+          >
+            ✨ Vendedoras ({metrics.sellersCount})
+          </button>
         </div>
       </div>
 
@@ -368,6 +404,12 @@ export default function AdminClientesPage() {
                         <h2 className="text-sm sm:text-base font-semibold text-lamarka-900 leading-tight">
                           {c.name}
                         </h2>
+
+                        {c.isSeller && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 text-[10px] font-semibold border border-purple-200">
+                            ✨ Vendedora
+                          </span>
+                        )}
 
                         {c.birthMonth === currentMonth && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-semibold border border-amber-200">
@@ -478,6 +520,25 @@ export default function AdminClientesPage() {
                       >
                         <Sliders className="w-4 h-4" />
                       </Link>
+
+                      {/* Botão Tornar/Remover Vendedora */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSeller(c.id, c.isSeller)}
+                        disabled={togglingSellerId === c.id}
+                        title={
+                          c.isSeller
+                            ? 'Remover status de vendedora desta cliente'
+                            : 'Marcar esta cliente como vendedora da loja'
+                        }
+                        className={`p-2 rounded-xl border text-xs font-medium transition-colors ${
+                          c.isSeller
+                            ? 'border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100'
+                            : 'border-lamarka-200 text-lamarka-500 hover:bg-lamarka-100 hover:text-lamarka-800'
+                        }`}
+                      >
+                        <UserCheck className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ShoppingBag, ArrowRight, Coins, AlertCircle, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShoppingBag, ArrowRight, Coins, AlertCircle, Sparkles, UserCheck } from 'lucide-react';
 import { CounterCustomerSummary, CounterSaleResult } from '@/lib/counter-service';
 
 interface SaleFormProps {
@@ -18,9 +18,24 @@ export function SaleForm({
   const [purchaseAmount, setPurchaseAmount] = useState('');
   const [useCashback, setUseCashback] = useState(false);
   const [redeemAmount, setRedeemAmount] = useState('');
-  const [operatorName, setOperatorName] = useState('Balcão');
+  const [operatorName, setOperatorName] = useState('Balcão / Caixa Geral');
+  const [sellers, setSellers] = useState<Array<{ id: string; name: string }>>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/balcao/vendedoras')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.sellers && Array.isArray(data.sellers)) {
+          setSellers(data.sellers);
+          if (data.sellers.length > 0 && operatorName === 'Balcão / Caixa Geral') {
+            setOperatorName(data.sellers[0].name);
+          }
+        }
+      })
+      .catch((err) => console.error('Erro ao carregar vendedoras:', err));
+  }, []);
 
   const availableBalance = customer.balanceInfo.availableBalance;
   const numPurchase = parseFloat(purchaseAmount.replace(',', '.')) || 0;
@@ -231,17 +246,36 @@ export function SaleForm({
           </div>
         )}
 
-        {/* Identificação da Atendente */}
+        {/* Seleção de Vendedora */}
         <div>
-          <label className="text-[11px] text-lamarka-600 block mb-1">
-            Nome da Atendente / Caixa:
-          </label>
-          <input
-            type="text"
-            value={operatorName}
-            onChange={(e) => setOperatorName(e.target.value)}
-            className="w-full px-3 py-1.5 rounded-xl border border-lamarka-200 text-xs text-lamarka-800 focus:outline-none focus:border-lamarka-500"
-          />
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-[11px] font-semibold text-lamarka-700 flex items-center gap-1">
+              <UserCheck className="w-3.5 h-3.5 text-lamarka-600" />
+              Vendedora Responsável:
+            </label>
+            <a
+              href="/admin/clientes"
+              target="_blank"
+              className="text-[10px] text-lamarka-500 hover:text-lamarka-800 underline"
+            >
+              Gerenciar vendedoras
+            </a>
+          </div>
+
+          <div className="relative">
+            <select
+              value={operatorName}
+              onChange={(e) => setOperatorName(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-lamarka-200 text-xs font-semibold text-lamarka-900 bg-white focus:outline-none focus:border-lamarka-500 focus:ring-2 focus:ring-lamarka-200 shadow-2xs"
+            >
+              <option value="Balcão / Caixa Geral">Balcão / Caixa Geral</option>
+              {sellers.map((s) => (
+                <option key={s.id} value={s.name}>
+                  ✨ {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <button

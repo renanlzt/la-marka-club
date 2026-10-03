@@ -67,7 +67,7 @@ export default function BalcaoPage() {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-lamarka-200 text-xs text-lamarka-700 hover:bg-lamarka-100 transition-colors"
         >
           <ShieldCheck className="w-3.5 h-3.5 text-lamarka-600" />
-          Painel Dieizy
+          Painel de Gestão
         </Link>
       </header>
 

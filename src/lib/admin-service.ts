@@ -187,6 +187,7 @@ export interface CustomerAdminSummary {
   birthMonth: number | null;
   notes: string | null;
   magicToken: string;
+  isSeller: boolean;
   createdAt: Date;
   balanceInfo: CustomerBalanceInfo;
   stats: {
@@ -284,6 +285,7 @@ export async function getAllCustomersWithBalance(query?: string): Promise<Custom
       birthMonth: cust.birthMonth,
       notes: cust.notes,
       magicToken: cust.magicToken,
+      isSeller: Boolean(cust.isSeller),
       createdAt: cust.createdAt,
       balanceInfo: {
         availableBalance,
@@ -299,4 +301,50 @@ export async function getAllCustomersWithBalance(query?: string): Promise<Custom
     };
   });
 }
+
+/**
+ * Altera o status de vendedora de uma cliente (liga/desliga)
+ */
+export async function toggleCustomerSeller(
+  customerId: string,
+  explicitStatus?: boolean
+): Promise<boolean> {
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    select: { isSeller: true },
+  });
+
+  if (!customer) {
+    throw new Error('Cliente não encontrada.');
+  }
+
+  const nextStatus =
+    explicitStatus !== undefined ? explicitStatus : !customer.isSeller;
+
+  const updated = await prisma.customer.update({
+    where: { id: customerId },
+    data: { isSeller: nextStatus },
+    select: { isSeller: true },
+  });
+
+  return updated.isSeller;
+}
+
+/**
+ * Retorna todas as clientes marcadas como vendedoras ativas na loja
+ */
+export async function getActiveSellers(): Promise<
+  Array<{ id: string; name: string; phone: string }>
+> {
+  return await prisma.customer.findMany({
+    where: { isSeller: true },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+    },
+    orderBy: { name: 'asc' },
+  });
+}
+
 

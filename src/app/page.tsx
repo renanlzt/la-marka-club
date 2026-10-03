@@ -57,7 +57,7 @@ export default function HomePage() {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <h2 className="text-xl font-semibold text-lamarka-900 mb-1 group-hover:text-lamarka-800">
-              Painel de Gestão (Dieizy)
+              Painel de Gestão
             </h2>
             <p className="text-sm text-lamarka-700 font-light">
               Métricas de retorno, campanhas promocionais, bônus de aniversário, conciliação de cupons e configurações.

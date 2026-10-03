@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { SettingsForm } from '@/components/admin/SettingsForm';
 import { TemplateEditor } from '@/components/admin/TemplateEditor';
+import { SecuritySettings } from '@/components/admin/SecuritySettings';
 import { Settings, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function AdminConfiguracoesPage() {
@@ -104,6 +105,9 @@ export default function AdminConfiguracoesPage() {
           onSave={handleSaveSettings}
         />
       )}
+
+      {/* Acesso e Segurança (Login/Senha) */}
+      <SecuritySettings />
 
       {templates.length > 0 && (
         <TemplateEditor

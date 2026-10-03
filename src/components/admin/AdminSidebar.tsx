@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Megaphone,
@@ -14,6 +14,7 @@ import {
   Store,
   Sparkles,
   Users,
+  LogOut,
 } from 'lucide-react';
 
 const menuItems = [
@@ -28,6 +29,20 @@ const menuItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  if (pathname === '/admin/login') {
+    return null;
+  }
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/auth/logout', { method: 'POST' });
+    } finally {
+      router.push('/admin/login');
+      router.refresh();
+    }
+  };
 
   return (
     <aside className="w-64 bg-white border-r border-lamarka-200/90 flex flex-col shrink-0 min-h-screen">
@@ -47,7 +62,7 @@ export function AdminSidebar() {
             La Marka Club
           </h2>
           <span className="text-[11px] text-lamarka-600 font-light flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-lamarka-500" /> Gestão da Dieizy
+            <Sparkles className="w-3 h-3 text-lamarka-500" /> Painel de Gestão
           </span>
         </div>
       </div>
@@ -74,8 +89,8 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      {/* Back to Balcão Footer */}
-      <div className="p-4 border-t border-lamarka-100">
+      {/* Back to Balcão & Sair Footer */}
+      <div className="p-4 border-t border-lamarka-100 flex flex-col gap-2">
         <Link
           href="/balcao"
           className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-xl bg-lamarka-50 hover:bg-lamarka-100 text-lamarka-800 text-xs font-semibold border border-lamarka-200/80 transition-colors"
@@ -83,6 +98,15 @@ export function AdminSidebar() {
           <Store className="w-4 h-4" />
           Ir para Frente de Caixa
         </Link>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl text-rose-700 hover:bg-rose-50 text-xs font-medium transition-colors"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          Sair do Painel
+        </button>
       </div>
     </aside>
   );

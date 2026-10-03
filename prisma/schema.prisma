@@ -16,11 +16,21 @@ model Customer {
   birthMonth   Int?              // Mês do aniversário (1-12)
   magicToken   String            @unique // Token para acesso à carteira da cliente
   notes        String?
+  isSeller     Boolean           @default(false) // Indica se esta cliente também atua como vendedora
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   
   credits      CashbackCredit[]
   transactions CashbackTransaction[]
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String   // Hash da senha com salt
+  name      String?  @default("Administrador")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model CashbackCredit {

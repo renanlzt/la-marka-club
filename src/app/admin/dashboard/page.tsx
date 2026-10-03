@@ -27,7 +27,7 @@ export default async function AdminDashboardPage() {
           <Sparkles className="w-3.5 h-3.5 text-lamarka-600" /> Indicadores & Relacionamento
         </div>
         <h1 className="text-2xl sm:text-3xl font-serif font-bold text-lamarka-900">
-          Painel de Gestão da Dieizy
+          Painel de Gestão
         </h1>
         <p className="text-xs sm:text-sm text-lamarka-600 font-light mt-1">
           Acompanhe o desempenho do La Marka Club, a fidelização das clientes e o impacto real do cashback nas vendas.
