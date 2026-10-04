@@ -35,7 +35,7 @@ export function BalanceCard({ balanceInfo }: BalanceCardProps) {
         </div>
 
         {/* Card Body: Balance Amount */}
-        <div className="relative z-10 my-2">
+        <div className="relative z-10 mt-2 mb-1">
           <span className="text-[11px] font-medium tracking-[0.15em] uppercase text-lamarka-200 block mb-1">
             Saldo Disponível em Carteira
           </span>
@@ -50,14 +50,6 @@ export function BalanceCard({ balanceInfo }: BalanceCardProps) {
               })}
             </span>
           </div>
-        </div>
-
-        {/* Card Footer: Usage Note */}
-        <div className="relative z-10 pt-4 mt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-lamarka-200 font-light">
-          <span>Abatimento direto no caixa</span>
-          <span className="text-[#DFB76C] font-medium flex items-center gap-0.5">
-            1 crédito = R$ 1,00
-          </span>
         </div>
       </div>
 

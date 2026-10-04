@@ -68,13 +68,15 @@ export default async function CustomerWalletPage({
         <BalanceCard balanceInfo={balanceInfo} />
 
         {/* Informações da Loja & Como Usar */}
-        <div className="w-full mt-3 bg-white/80 backdrop-blur-md border border-lamarka-200/80 rounded-3xl p-4.5 text-xs text-lamarka-700 flex items-start gap-3.5 shadow-card">
-          <div className="w-8 h-8 rounded-xl bg-lamarka-100 flex items-center justify-center shrink-0 text-lamarka-700">
+        <div className="w-full mt-3 bg-white/90 backdrop-blur-md border border-lamarka-200/90 rounded-2xl p-4 text-xs text-lamarka-700 flex items-start gap-3.5 shadow-card">
+          <div className="w-9 h-9 rounded-xl bg-lamarka-100 flex items-center justify-center shrink-0 text-lamarka-700 mt-0.5">
             <Store className="w-4 h-4" strokeWidth={1.5} />
           </div>
-          <p className="leading-relaxed font-light text-lamarka-800 pt-0.5">
-            Seu cashback é um benefício exclusivo da <strong className="font-semibold text-lamarka-900">La Marka</strong>. Basta informar seu telefone no balcão da loja para abater seu saldo direto na sua próxima compra!
-          </p>
+          <div className="flex-1 min-w-0">
+            <p className="leading-relaxed font-light text-lamarka-800 text-xs break-words">
+              Seu cashback é um benefício exclusivo da <strong className="font-semibold text-lamarka-900">La Marka</strong>. Basta informar seu telefone no balcão da loja para abater seu saldo direto na sua próxima compra!
+            </p>
+          </div>
         </div>
 
         {/* Extrato Transparente */}
