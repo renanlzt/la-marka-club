@@ -197,3 +197,171 @@ export function verifySessionToken(
 
   return { adminId, username, role };
 }
+
+/**
+ * Retorna todos os usuários administrativos com seus papéis (sem expor senhas)
+ */
+export async function getAllAdminUsers() {
+  return await prisma.adminUser.findMany({
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+    orderBy: [
+      { role: 'asc' }, // GESTAO antes de BALCAO
+      { name: 'asc' },
+    ],
+  });
+}
+
+/**
+ * Cadastra um novo usuário de sistema (Gestão ou Balcão)
+ */
+export async function createAdminUser(data: {
+  username: string;
+  password: string;
+  name?: string;
+  role?: string;
+}) {
+  const cleanUsername = data.username.trim().toLowerCase();
+  if (!cleanUsername) {
+    throw new Error('O nome de usuário é obrigatório.');
+  }
+
+  if (!data.password || data.password.trim().length < 4) {
+    throw new Error('A senha deve ter no mínimo 4 caracteres.');
+  }
+
+  const existing = await prisma.adminUser.findUnique({
+    where: { username: cleanUsername },
+  });
+  if (existing) {
+    throw new Error('Este nome de usuário já está em uso.');
+  }
+
+  const role = data.role === 'BALCAO' ? 'BALCAO' : 'GESTAO';
+
+  return await prisma.adminUser.create({
+    data: {
+      username: cleanUsername,
+      password: hashPassword(data.password.trim()),
+      name: data.name?.trim() || cleanUsername,
+      role,
+    },
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+}
+
+/**
+ * Atualiza dados de um usuário (nome, usuário, perfil, ou redefinição de senha)
+ */
+export async function updateAdminUser(
+  id: string,
+  data: {
+    name?: string;
+    username?: string;
+    role?: string;
+    newPassword?: string;
+  }
+) {
+  const user = await prisma.adminUser.findUnique({
+    where: { id },
+  });
+  if (!user) {
+    throw new Error('Usuário não encontrado.');
+  }
+
+  const dataToUpdate: any = {};
+
+  if (data.name !== undefined) {
+    dataToUpdate.name = data.name.trim();
+  }
+
+  if (data.username !== undefined && data.username.trim()) {
+    const cleanUsername = data.username.trim().toLowerCase();
+    if (cleanUsername !== user.username) {
+      const existing = await prisma.adminUser.findUnique({
+        where: { username: cleanUsername },
+      });
+      if (existing && existing.id !== id) {
+        throw new Error('Este nome de usuário já está em uso.');
+      }
+      dataToUpdate.username = cleanUsername;
+    }
+  }
+
+  if (data.role !== undefined) {
+    const newRole = data.role === 'BALCAO' ? 'BALCAO' : 'GESTAO';
+    // Se estiver rebaixando de GESTAO para BALCAO, certificar que não é o único GESTAO
+    if (user.role === 'GESTAO' && newRole === 'BALCAO') {
+      const totalGestao = await prisma.adminUser.count({
+        where: { role: 'GESTAO' },
+      });
+      if (totalGestao <= 1) {
+        throw new Error('Não é possível alterar o perfil do único gestor do sistema.');
+      }
+    }
+    dataToUpdate.role = newRole;
+  }
+
+  if (data.newPassword !== undefined && data.newPassword.trim()) {
+    if (data.newPassword.trim().length < 4) {
+      throw new Error('A nova senha deve ter no mínimo 4 caracteres.');
+    }
+    dataToUpdate.password = hashPassword(data.newPassword.trim());
+  }
+
+  return await prisma.adminUser.update({
+    where: { id },
+    data: dataToUpdate,
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+}
+
+/**
+ * Exclui um usuário do sistema (com proteção de segurança)
+ */
+export async function deleteAdminUser(id: string, currentAdminId?: string) {
+  if (currentAdminId && id === currentAdminId) {
+    throw new Error('Você não pode excluir o seu próprio usuário conectado.');
+  }
+
+  const user = await prisma.adminUser.findUnique({
+    where: { id },
+  });
+  if (!user) {
+    throw new Error('Usuário não encontrado.');
+  }
+
+  if (user.role === 'GESTAO') {
+    const totalGestao = await prisma.adminUser.count({
+      where: { role: 'GESTAO' },
+    });
+    if (totalGestao <= 1) {
+      throw new Error('Não é possível excluir o único gestor do sistema.');
+    }
+  }
+
+  return await prisma.adminUser.delete({
+    where: { id },
+  });
+}
+
