@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { prisma } from '../src/lib/db';
-import { getAllCustomersWithBalance } from '../src/lib/admin-service';
+import { getAllCustomersWithBalance, updateCustomer } from '../src/lib/admin-service';
 import { grantCashback } from '../src/lib/fifo-engine';
 import { nanoid } from 'nanoid';
 
@@ -51,5 +51,40 @@ describe('Admin Customers Management', () => {
 
     const listNonExistent = await getAllCustomersWithBalance('ClienteInexistenteXYZ999');
     expect(listNonExistent.length).toBe(0);
+  });
+
+  it('should update customer data successfully', async () => {
+    const updated = await updateCustomer(customerId, {
+      name: 'Camila Alcantara Santos',
+      phone: '(11) 98888-7777',
+      cpf: '987.654.321-00',
+      birthDay: 25,
+      birthMonth: 12,
+      notes: 'Prefere vestidos floridos e tamanho M',
+    });
+
+    expect(updated.name).toBe('Camila Alcantara Santos');
+    expect(updated.phone).toBe('11988887777');
+    expect(updated.cpf).toBe('98765432100');
+    expect(updated.birthDay).toBe(25);
+    expect(updated.birthMonth).toBe(12);
+    expect(updated.notes).toBe('Prefere vestidos floridos e tamanho M');
+  });
+
+  it('should prevent updating customer phone to an already taken phone', async () => {
+    const otherPhone = `1198${Math.floor(1000000 + Math.random() * 9000000)}`;
+    await prisma.customer.create({
+      data: {
+        name: 'Outra Cliente',
+        phone: otherPhone,
+        magicToken: `tk_${nanoid(20)}`,
+      },
+    });
+
+    await expect(
+      updateCustomer(customerId, {
+        phone: otherPhone,
+      })
+    ).rejects.toThrow('Já existe outra cliente cadastrada com este número de telefone.');
   });
 });

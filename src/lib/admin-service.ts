@@ -487,4 +487,50 @@ export async function getActiveSellers(): Promise<
   });
 }
 
+/**
+ * Atualiza dados cadastrais de uma cliente (Nome, Telefone, CPF, Aniversário, Notas)
+ */
+export async function updateCustomer(
+  id: string,
+  data: {
+    name?: string;
+    phone?: string;
+    cpf?: string | null;
+    birthDay?: number | null;
+    birthMonth?: number | null;
+    notes?: string | null;
+  }
+) {
+  const customer = await prisma.customer.findUnique({
+    where: { id },
+  });
+
+  if (!customer) {
+    throw new Error('Cliente não encontrada.');
+  }
+
+  let cleanPhone = data.phone !== undefined ? data.phone.replace(/\D/g, '') : undefined;
+  if (cleanPhone && cleanPhone !== customer.phone) {
+    const existingWithPhone = await prisma.customer.findUnique({
+      where: { phone: cleanPhone },
+    });
+    if (existingWithPhone && existingWithPhone.id !== id) {
+      throw new Error('Já existe outra cliente cadastrada com este número de telefone.');
+    }
+  }
+
+  return await prisma.customer.update({
+    where: { id },
+    data: {
+      ...(data.name !== undefined && { name: data.name.trim() }),
+      ...(cleanPhone !== undefined && { phone: cleanPhone }),
+      ...(data.cpf !== undefined && { cpf: data.cpf ? data.cpf.replace(/\D/g, '') : null }),
+      ...(data.birthDay !== undefined && { birthDay: data.birthDay || null }),
+      ...(data.birthMonth !== undefined && { birthMonth: data.birthMonth || null }),
+      ...(data.notes !== undefined && { notes: data.notes ? data.notes.trim() : null }),
+    },
+  });
+}
+
+
 

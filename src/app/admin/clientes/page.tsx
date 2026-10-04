@@ -19,6 +19,8 @@ import {
   User,
   Clock,
   Filter,
+  Pencil,
+  X,
 } from 'lucide-react';
 
 interface CustomerSummary {
@@ -52,6 +54,19 @@ export default function AdminClientesPage() {
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'WITH_BALANCE' | 'EXPIRING' | 'BIRTHDAYS'>('ALL');
   const [sortBy, setSortBy] = useState<'RECENT' | 'BALANCE_DESC' | 'NAME_ASC' | 'PURCHASES_DESC'>('RECENT');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  // Estado para Edição de Cliente
+  const [editingCustomer, setEditingCustomer] = useState<CustomerSummary | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    phone: '',
+    cpf: '',
+    birthDay: '',
+    birthMonth: '',
+    notes: '',
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const fetchCustomers = async (query = '') => {
     setLoading(true);
@@ -167,6 +182,59 @@ export default function AdminClientesPage() {
       'Dez',
     ];
     return months[m] || '';
+  };
+
+  const handleOpenEditModal = (customer: CustomerSummary) => {
+    setEditingCustomer(customer);
+    setEditFormData({
+      name: customer.name || '',
+      phone: customer.phone || '',
+      cpf: customer.cpf || '',
+      birthDay: customer.birthDay ? String(customer.birthDay) : '',
+      birthMonth: customer.birthMonth ? String(customer.birthMonth) : '',
+      notes: customer.notes || '',
+    });
+    setEditError(null);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditingCustomer(null);
+    setEditError(null);
+  };
+
+  const handleSaveCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCustomer) return;
+    setSavingEdit(true);
+    setEditError(null);
+
+    try {
+      const res = await fetch('/api/admin/clientes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingCustomer.id,
+          name: editFormData.name,
+          phone: editFormData.phone,
+          cpf: editFormData.cpf || null,
+          birthDay: editFormData.birthDay ? parseInt(editFormData.birthDay, 10) : null,
+          birthMonth: editFormData.birthMonth ? parseInt(editFormData.birthMonth, 10) : null,
+          notes: editFormData.notes || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao salvar alterações');
+      }
+
+      await fetchCustomers(searchQuery);
+      setEditingCustomer(null);
+    } catch (err: any) {
+      setEditError(err.message || 'Erro inesperado ao salvar.');
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   return (
@@ -471,6 +539,16 @@ export default function AdminClientesPage() {
                         <ExternalLink className="w-3 h-3 text-lamarka-300" strokeWidth={1.5} />
                       </Link>
 
+                      {/* Botão Editar Dados */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(c)}
+                        title="Editar dados da cliente"
+                        className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs"
+                      >
+                        <Pencil className="w-4 h-4" strokeWidth={1.5} />
+                      </button>
+
                       {/* Botão Ajustar Saldo */}
                       <Link
                         href={`/admin/ajustes?customerId=${c.id}`}
@@ -487,6 +565,161 @@ export default function AdminClientesPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de Edição de Cliente */}
+      {editingCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-lamarka-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-lamarka-100 flex items-center justify-between bg-lamarka-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-[#DFB76C]/15 border border-[#DFB76C]/30 flex items-center justify-center text-lamarka-800">
+                  <Pencil className="w-4 h-4 text-[#B89648]" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-medium text-lamarka-900 text-lg">Editar Dados da Cliente</h3>
+                  <p className="text-xs text-lamarka-500">Altere informações cadastrais e de contato</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseEditModal}
+                className="text-lamarka-400 hover:text-lamarka-700 p-1.5 rounded-lg hover:bg-lamarka-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCustomer} className="flex-1 overflow-y-auto p-6 space-y-4">
+              {editError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-medium">
+                  {editError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-lamarka-700 mb-1.5">
+                  Nome Completo *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  placeholder="Nome da cliente"
+                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-lamarka-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#DFB76C]/40 focus:border-[#DFB76C] text-lamarka-900"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-lamarka-700 mb-1.5">
+                    Telefone / WhatsApp *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.phone}
+                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                    placeholder="(49) 99999-9999"
+                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-lamarka-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#DFB76C]/40 focus:border-[#DFB76C] text-lamarka-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-lamarka-700 mb-1.5">
+                    CPF (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.cpf}
+                    onChange={(e) => setEditFormData({ ...editFormData, cpf: e.target.value })}
+                    placeholder="000.000.000-00"
+                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-lamarka-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#DFB76C]/40 focus:border-[#DFB76C] text-lamarka-900"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-lamarka-700 mb-1.5">
+                  Data de Nascimento (Aniversário)
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <input
+                      type="number"
+                      min={1}
+                      max={31}
+                      value={editFormData.birthDay}
+                      onChange={(e) => setEditFormData({ ...editFormData, birthDay: e.target.value })}
+                      placeholder="Dia (1 a 31)"
+                      className="w-full px-3.5 py-2.5 text-sm bg-white border border-lamarka-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#DFB76C]/40 focus:border-[#DFB76C] text-lamarka-900"
+                    />
+                  </div>
+                  <div>
+                    <select
+                      value={editFormData.birthMonth}
+                      onChange={(e) => setEditFormData({ ...editFormData, birthMonth: e.target.value })}
+                      className="w-full px-3.5 py-2.5 text-sm bg-white border border-lamarka-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#DFB76C]/40 focus:border-[#DFB76C] text-lamarka-900"
+                    >
+                      <option value="">Selecione o mês...</option>
+                      <option value="1">01 - Janeiro</option>
+                      <option value="2">02 - Fevereiro</option>
+                      <option value="3">03 - Março</option>
+                      <option value="4">04 - Abril</option>
+                      <option value="5">05 - Maio</option>
+                      <option value="6">06 - Junho</option>
+                      <option value="7">07 - Julho</option>
+                      <option value="8">08 - Agosto</option>
+                      <option value="9">09 - Setembro</option>
+                      <option value="10">10 - Outubro</option>
+                      <option value="11">11 - Novembro</option>
+                      <option value="12">12 - Dezembro</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-lamarka-700 mb-1.5">
+                  Observações / Notas Internas
+                </label>
+                <textarea
+                  rows={3}
+                  value={editFormData.notes}
+                  onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                  placeholder="Preferências de estilo, tamanhos de roupa, observações de atendimento..."
+                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-lamarka-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#DFB76C]/40 focus:border-[#DFB76C] text-lamarka-900 resize-none"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3 border-t border-lamarka-100">
+                <button
+                  type="button"
+                  onClick={handleCloseEditModal}
+                  disabled={savingEdit}
+                  className="px-4 py-2.5 rounded-xl border border-lamarka-200 text-xs font-semibold text-lamarka-700 hover:bg-lamarka-100 transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all disabled:opacity-50"
+                >
+                  {savingEdit ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    <span>Salvar Alterações</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
