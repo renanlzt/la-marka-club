@@ -166,5 +166,37 @@ describe('Auditoria e Blindagem de Segurança da Aplicação', () => {
       expect(res.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
       expect(res.headers.get('X-XSS-Protection')).toBe('1; mode=block');
     });
+
+    it('deve bloquear requisições com origem externa fraudulenta (CSRF) com status 403', async () => {
+      const adminToken = createSessionToken('user-admin', 'dieizy', 'GESTAO');
+      const req = new NextRequest('http://localhost:3000/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          cookie: `admin_session=${adminToken}`,
+          origin: 'https://site-malicioso-hacker.com',
+          host: 'localhost:3000',
+        },
+      });
+
+      const res = await middleware(req);
+      expect(res.status).toBe(403);
+      const json = await res.json();
+      expect(json.error).toContain('CSRF');
+    });
+  });
+
+  describe('5. Prevenção contra XSS e Injeção de Tags (Sanitização de Entradas)', () => {
+    it('deve remover tags script e elementos HTML maliciosos de textos e nomes', async () => {
+      const { sanitizeText, sanitizeName, sanitizePhone } = await import('../src/lib/sanitize');
+
+      const maliciousText = '<script>alert("hack")</script>Promoção VIP!';
+      expect(sanitizeText(maliciousText)).toBe('alert(hack)Promoção VIP!');
+
+      const maliciousHtml = '<img src=x onerror=alert(1)> Maria Clara';
+      expect(sanitizeName(maliciousHtml)).toBe('Maria Clara');
+
+      const dirtyPhone = '(49) 99926-6069<script>';
+      expect(sanitizePhone(dirtyPhone)).toBe('49999266069');
+    });
   });
 });

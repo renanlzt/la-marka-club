@@ -106,7 +106,11 @@ export function TransactionHistory({ transactions }: TransactionHistoryProps) {
                   })}
                 </span>
                 <span className="text-[10px] text-lamarka-400 font-light">
-                  Saldo: R$ {tx.balanceAfter.toFixed(2)}
+                  Saldo: R${' '}
+                  {tx.balanceAfter.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
             </div>

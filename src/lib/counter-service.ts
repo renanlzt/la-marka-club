@@ -75,6 +75,8 @@ export async function searchCustomerForCounter(
   };
 }
 
+import { sanitizeName, sanitizeNotes } from './sanitize';
+
 /**
  * Cadastro expresso de cliente no balcão em até 10 segundos
  */
@@ -86,6 +88,11 @@ export async function registerQuickCustomer(data: {
   birthMonth?: number;
   notes?: string;
 }) {
+  const cleanName = sanitizeName(data.name);
+  if (!cleanName) {
+    throw new Error('Informe o nome da cliente.');
+  }
+
   const cleanPhone = data.phone.replace(/\D/g, '');
 
   if (!cleanPhone || cleanPhone.length < 8) {
@@ -104,12 +111,12 @@ export async function registerQuickCustomer(data: {
 
   return await prisma.customer.create({
     data: {
-      name: data.name.trim(),
+      name: cleanName,
       phone: cleanPhone,
       cpf: data.cpf?.replace(/\D/g, '') || null,
       birthDay: data.birthDay || null,
       birthMonth: data.birthMonth || null,
-      notes: data.notes || null,
+      notes: data.notes ? sanitizeNotes(data.notes) : null,
       magicToken,
     },
   });

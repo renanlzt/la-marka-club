@@ -89,7 +89,31 @@ export async function middleware(request: NextRequest) {
       return applySecurityHeaders(redirectRes);
     }
 
-    // 3. Controle de Acesso Baseado em Papéis (RBAC)
+    // 3. Proteção contra CSRF para chamadas de API com mutação de estado
+    if (isApi && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+      const origin = request.headers.get('origin');
+      const host = request.headers.get('host');
+      if (origin && host) {
+        try {
+          const originHost = new URL(origin).host;
+          if (originHost !== host) {
+            const csrfRes = NextResponse.json(
+              { error: 'Bloqueio de segurança: Requisição entre origens não autorizada (CSRF).' },
+              { status: 403 }
+            );
+            return applySecurityHeaders(csrfRes);
+          }
+        } catch {
+          const invalidRes = NextResponse.json(
+            { error: 'Bloqueio de segurança: Origem inválida.' },
+            { status: 403 }
+          );
+          return applySecurityHeaders(invalidRes);
+        }
+      }
+    }
+
+    // 4. Controle de Acesso Baseado em Papéis (RBAC)
     // Usuários de perfil BALCAO não podem acessar páginas ou APIs de GESTAO (/admin)
     if (session.role === 'BALCAO') {
       if (isProtectedAdminApi) {

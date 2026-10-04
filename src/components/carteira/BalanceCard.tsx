@@ -16,6 +16,7 @@ export function BalanceCard({ balanceInfo }: BalanceCardProps) {
         <div className="absolute -right-12 -top-12 w-48 h-48 bg-[#DFB76C]/10 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-xl pointer-events-none" />
         <div className="absolute right-0 bottom-0 w-32 h-32 border border-[#DFB76C]/10 rounded-full -mr-8 -mb-8 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmer pointer-events-none" />
 
         {/* Card Header: Brand & VIP Tag */}
         <div className="flex items-center justify-between mb-6 relative z-10">

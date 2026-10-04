@@ -7,6 +7,8 @@ import {
 import { formatWhatsAppMessage, generateWhatsAppLink } from './whatsapp';
 import { getAppBaseUrl } from './url';
 
+import { sanitizeText } from './sanitize';
+
 export interface CampaignData {
   name: string;
   description?: string;
@@ -21,10 +23,15 @@ export interface CampaignData {
  * Criação de uma campanha promocional temporária
  */
 export async function createCampaign(data: CampaignData) {
+  const cleanName = sanitizeText(data.name);
+  if (!cleanName) {
+    throw new Error('O nome da campanha é obrigatório.');
+  }
+
   return await prisma.campaign.create({
     data: {
-      name: data.name.trim(),
-      description: data.description?.trim() || null,
+      name: cleanName,
+      description: data.description ? sanitizeText(data.description) : null,
       type: data.type,
       value: data.value,
       minPurchase: data.minPurchase || null,
@@ -137,18 +144,20 @@ export async function performManualAdjustment(
   reason: string,
   operatorName: string
 ) {
-  if (!reason || reason.trim().length === 0) {
+  const cleanReason = sanitizeText(reason);
+  if (!cleanReason) {
     throw new Error('A justificativa é obrigatória para ajustes manuais.');
   }
 
-  if (!operatorName || operatorName.trim().length === 0) {
+  const cleanOperator = sanitizeText(operatorName);
+  if (!cleanOperator) {
     throw new Error('O nome do operador é obrigatório.');
   }
 
   return await manualAdjustBalance(
     customerId,
     amount,
-    reason.trim(),
-    operatorName.trim()
+    cleanReason,
+    cleanOperator
   );
 }
