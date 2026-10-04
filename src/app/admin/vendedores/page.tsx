@@ -51,7 +51,9 @@ export default function AdminVendedoresPage() {
   // Modal de Criação / Edição
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSeller, setEditingSeller] = useState<SellerItem | null>(null);
-  const [mode, setMode] = useState<'NEW' | 'LINK_CUSTOMER'>('NEW');
+  const [mode, setMode] = useState<'NEW' | 'LINK_CUSTOMER'>('LINK_CUSTOMER');
+  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+  const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
 
   // Formulário
   const [formData, setFormData] = useState({
@@ -140,6 +142,28 @@ export default function AdminVendedoresPage() {
     return { total, activeCount, linkedCount };
   }, [sellers]);
 
+  // Busca instantânea de clientes para transformar em vendedora
+  const filteredCustomerOptions = useMemo(() => {
+    if (!customerSearchQuery.trim()) {
+      return customers.slice(0, 10);
+    }
+    const q = customerSearchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const qDigits = customerSearchQuery.replace(/\D/g, '');
+
+    return customers
+      .filter((c) => {
+        const nameNorm = c.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const matchesName = nameNorm.includes(q);
+        const matchesPhone = qDigits.length > 0 && c.phone.includes(qDigits);
+        return matchesName || matchesPhone;
+      })
+      .slice(0, 30);
+  }, [customers, customerSearchQuery]);
+
+  const selectedCustomerObj = useMemo(() => {
+    return customers.find((c) => c.id === formData.customerId) || null;
+  }, [customers, formData.customerId]);
+
   // Alternar status ativo
   const handleToggleActive = async (seller: SellerItem) => {
     try {
@@ -177,8 +201,10 @@ export default function AdminVendedoresPage() {
   // Abrir modal novo
   const handleOpenNewModal = () => {
     setEditingSeller(null);
-    setMode('NEW');
+    setMode('LINK_CUSTOMER');
     setFormData({ name: '', phone: '', code: '', customerId: '' });
+    setCustomerSearchQuery('');
+    setIsCustomerDropdownOpen(false);
     setErrorMsg('');
     setIsModalOpen(true);
   };
@@ -193,11 +219,13 @@ export default function AdminVendedoresPage() {
       code: seller.code || '',
       customerId: seller.customerId || '',
     });
+    setCustomerSearchQuery('');
+    setIsCustomerDropdownOpen(false);
     setErrorMsg('');
     setIsModalOpen(true);
   };
 
-  // Quando escolhe cliente existente no select
+  // Quando escolhe cliente existente no seletor pesquisável
   const handleSelectCustomer = (customerId: string) => {
     const selected = customers.find((c) => c.id === customerId);
     if (selected) {
@@ -207,9 +235,21 @@ export default function AdminVendedoresPage() {
         name: selected.name,
         phone: selected.phone,
       }));
-    } else {
-      setFormData((prev) => ({ ...prev, customerId: '' }));
+      setCustomerSearchQuery('');
+      setIsCustomerDropdownOpen(false);
     }
+  };
+
+  // Desvincular cliente para escolher outra
+  const handleDeselectCustomer = () => {
+    setFormData((prev) => ({
+      ...prev,
+      customerId: '',
+      name: '',
+      phone: '',
+    }));
+    setCustomerSearchQuery('');
+    setIsCustomerDropdownOpen(true);
   };
 
   // Salvar formulário
@@ -559,14 +599,29 @@ export default function AdminVendedoresPage() {
             )}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              {/* Seletor de Modo: Nova ou Vincular Cliente */}
+              {/* Seletor de Modo: Vincular Cliente ou Consultora Avulsa */}
               {!editingSeller && (
                 <div className="flex rounded-xl bg-lamarka-100 p-1 text-xs font-medium">
                   <button
                     type="button"
                     onClick={() => {
+                      setMode('LINK_CUSTOMER');
+                      setIsCustomerDropdownOpen(false);
+                    }}
+                    className={`flex-1 py-1.5 rounded-lg transition-colors text-center ${
+                      mode === 'LINK_CUSTOMER'
+                        ? 'bg-white text-lamarka-900 shadow-2xs font-semibold'
+                        : 'text-lamarka-600 hover:text-lamarka-800'
+                    }`}
+                  >
+                    Vincular Cliente da Loja
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
                       setMode('NEW');
                       setFormData((prev) => ({ ...prev, customerId: '' }));
+                      setIsCustomerDropdownOpen(false);
                     }}
                     className={`flex-1 py-1.5 rounded-lg transition-colors text-center ${
                       mode === 'NEW'
@@ -576,38 +631,107 @@ export default function AdminVendedoresPage() {
                   >
                     Consultora Avulsa
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setMode('LINK_CUSTOMER')}
-                    className={`flex-1 py-1.5 rounded-lg transition-colors text-center ${
-                      mode === 'LINK_CUSTOMER'
-                        ? 'bg-white text-lamarka-900 shadow-2xs font-semibold'
-                        : 'text-lamarka-600 hover:text-lamarka-800'
-                    }`}
-                  >
-                    Vincular Cliente
-                  </button>
                 </div>
               )}
 
               {/* Se estiver no modo Vincular Cliente */}
               {mode === 'LINK_CUSTOMER' && (
-                <div>
-                  <label className="block text-[11px] font-semibold text-lamarka-700 uppercase tracking-wider mb-1.5">
-                    Selecione a Cliente
+                <div className="flex flex-col gap-1.5">
+                  <label className="block text-[11px] font-semibold text-lamarka-700 uppercase tracking-wider">
+                    Pesquisar Cliente da Base *
                   </label>
-                  <select
-                    value={formData.customerId}
-                    onChange={(e) => handleSelectCustomer(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-lamarka-200 bg-white text-xs sm:text-sm text-lamarka-900 focus:outline-none focus:ring-2 focus:ring-lamarka-400"
-                  >
-                    <option value="">Selecione uma cliente da base...</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} — {formatPhone(c.phone)}
-                      </option>
-                    ))}
-                  </select>
+
+                  {selectedCustomerObj ? (
+                    <div className="p-3 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 flex items-center justify-between gap-3 shadow-2xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-100 border border-emerald-200 text-emerald-800 flex items-center justify-center shrink-0">
+                          <Check className="w-4 h-4 text-emerald-700" strokeWidth={2} />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-semibold text-emerald-800 uppercase tracking-wider block">
+                            Cliente Selecionada
+                          </span>
+                          <h4 className="text-xs font-bold text-emerald-950 truncate">
+                            {selectedCustomerObj.name}
+                          </h4>
+                          <p className="text-[11px] text-emerald-700 font-light">
+                            {formatPhone(selectedCustomerObj.phone)}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleDeselectCustomer}
+                        className="text-xs font-semibold text-emerald-900 hover:text-emerald-950 px-3 py-1.5 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-100 transition-colors shadow-2xs shrink-0"
+                      >
+                        Trocar
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <div className="relative">
+                        <Search className="w-4 h-4 text-lamarka-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          type="text"
+                          value={customerSearchQuery}
+                          onChange={(e) => {
+                            setCustomerSearchQuery(e.target.value);
+                            setIsCustomerDropdownOpen(true);
+                          }}
+                          onFocus={() => setIsCustomerDropdownOpen(true)}
+                          placeholder="Digite o nome ou telefone da cliente..."
+                          className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-lamarka-200 focus:outline-none focus:ring-2 focus:ring-lamarka-400 text-xs sm:text-sm text-lamarka-900 placeholder:text-lamarka-400 bg-white shadow-2xs"
+                          autoFocus
+                        />
+                        {customerSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setCustomerSearchQuery('')}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-lamarka-400 hover:text-lamarka-700"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {isCustomerDropdownOpen && (
+                        <div className="mt-1.5 max-h-56 overflow-y-auto rounded-2xl border border-lamarka-200 bg-white shadow-card divide-y divide-lamarka-100 z-30">
+                          {filteredCustomerOptions.length === 0 ? (
+                            <div className="p-4 text-center text-xs text-lamarka-500 font-light">
+                              Nenhuma cliente encontrada com "{customerSearchQuery}"
+                            </div>
+                          ) : (
+                            <>
+                              <div className="px-3 py-1.5 bg-lamarka-50 text-[10px] font-semibold text-lamarka-500 uppercase tracking-wider flex items-center justify-between">
+                                <span>{customerSearchQuery ? `Resultados (${filteredCustomerOptions.length})` : 'Sugestões recentes'}</span>
+                                <span className="font-light normal-case">Clique para selecionar</span>
+                              </div>
+                              {filteredCustomerOptions.map((c) => (
+                                <button
+                                  key={c.id}
+                                  type="button"
+                                  onClick={() => handleSelectCustomer(c.id)}
+                                  className="w-full text-left p-2.5 sm:px-3 hover:bg-lamarka-50 transition-colors flex items-center justify-between gap-2 group"
+                                >
+                                  <div className="min-w-0">
+                                    <span className="text-xs font-semibold text-lamarka-900 block truncate group-hover:text-lamarka-800">
+                                      {c.name}
+                                    </span>
+                                    <span className="text-[11px] text-lamarka-500 font-light block">
+                                      {formatPhone(c.phone)}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-lamarka-100 text-lamarka-700 group-hover:bg-lamarka-800 group-hover:text-white transition-colors shrink-0">
+                                    Selecionar
+                                  </span>
+                                </button>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
