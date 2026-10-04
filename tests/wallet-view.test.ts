@@ -30,6 +30,9 @@ describe('Customer Digital Wallet Service & Privacy', () => {
     expect(wallet?.customer.firstName).toBe('Camila');
     expect(wallet?.customer.maskedPhone).toContain('****');
     expect(wallet?.balanceInfo.availableBalance).toBe(10.0); // 5% of 200 = 10.0
+    expect(wallet?.storeSettings).toBeDefined();
+    expect(wallet?.storeSettings.defaultExpirationDays).toBe(45);
+    expect(wallet?.storeSettings.defaultCashbackPercentage).toBe(5.0);
     expect(wallet?.transactions.length).toBeGreaterThanOrEqual(1);
     expect(wallet?.transactions[0].type).toBe('EARN');
   });

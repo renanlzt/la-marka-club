@@ -53,7 +53,7 @@ export default async function CustomerWalletPage({
     );
   }
 
-  const { customer, balanceInfo, transactions } = walletData;
+  const { customer, balanceInfo, storeSettings, transactions } = walletData;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-lamarka-100/70 via-lamarka-50 to-white flex flex-col items-center pb-16 px-4 sm:px-6">
@@ -74,7 +74,7 @@ export default async function CustomerWalletPage({
           </div>
           <div className="flex-1 min-w-0">
             <p className="leading-relaxed font-light text-lamarka-800 text-xs break-words">
-              Seu cashback é um benefício exclusivo da <strong className="font-semibold text-lamarka-900">La Marka</strong>. Basta informar seu telefone no balcão da loja para abater seu saldo direto na sua próxima compra!
+              Seu cashback é um benefício exclusivo da <strong className="font-semibold text-lamarka-900">{storeSettings.storeName}</strong> ({storeSettings.defaultCashbackPercentage}% acumulado a cada compra com validade de {storeSettings.defaultExpirationDays} dias). Basta informar seu telefone no balcão da loja para abater seu saldo direto na sua próxima compra!
             </p>
           </div>
         </div>

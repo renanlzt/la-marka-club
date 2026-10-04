@@ -39,6 +39,50 @@ describe('Admin Dashboard Stats & Store Settings', () => {
     });
   });
 
+  it('should update active purchase credits expiration date when defaultExpirationDays changes', async () => {
+    const customer = await prisma.customer.create({
+      data: {
+        name: 'Cliente Teste Validade',
+        phone: '11999998877',
+        magicToken: 'tk_test_validade',
+      },
+    });
+
+    const now = new Date();
+    const expires45 = new Date(now);
+    expires45.setDate(expires45.getDate() + 45);
+
+    const credit = await prisma.cashbackCredit.create({
+      data: {
+        customerId: customer.id,
+        initialAmount: 10.0,
+        currentBalance: 10.0,
+        expiresAt: expires45,
+        status: 'ACTIVE',
+        origin: 'PURCHASE',
+      },
+    });
+
+    // Atualiza configurações da loja para 60 dias
+    await updateStoreSettings({
+      defaultExpirationDays: 60,
+    });
+
+    const updatedCredit = await prisma.cashbackCredit.findUnique({
+      where: { id: credit.id },
+    });
+
+    const diffDays = Math.round(
+      (updatedCredit!.expiresAt.getTime() - updatedCredit!.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    expect(diffDays).toBe(60);
+
+    // Clean up
+    await prisma.cashbackCredit.delete({ where: { id: credit.id } });
+    await prisma.customer.delete({ where: { id: customer.id } });
+    await updateStoreSettings({ defaultExpirationDays: 45 });
+  });
+
   it('should customize a WhatsApp message template and allow reset to default', async () => {
     const customContent = 'Olá {primeiro_nome}, recado especial!';
 

@@ -118,7 +118,7 @@ export async function updateStoreSettings(data: {
   birthdayBonusValidityDays?: number;
   birthdayBonusDaysBefore?: number;
 }) {
-  return await prisma.storeSetting.upsert({
+  const result = await prisma.storeSetting.upsert({
     where: { id: 'default' },
     update: data,
     create: {
@@ -131,6 +131,28 @@ export async function updateStoreSettings(data: {
       birthdayBonusDaysBefore: data.birthdayBonusDaysBefore ?? 7,
     },
   });
+
+  // Se o prazo de validade padrão for atualizado, ajusta a data de expiração dos créditos ativos de compra
+  if (data.defaultExpirationDays && data.defaultExpirationDays > 0) {
+    const activePurchaseCredits = await prisma.cashbackCredit.findMany({
+      where: {
+        status: 'ACTIVE',
+        origin: 'PURCHASE',
+        campaignId: null,
+      },
+    });
+
+    for (const credit of activePurchaseCredits) {
+      const newExpiresAt = new Date(credit.createdAt);
+      newExpiresAt.setDate(newExpiresAt.getDate() + data.defaultExpirationDays);
+      await prisma.cashbackCredit.update({
+        where: { id: credit.id },
+        data: { expiresAt: newExpiresAt },
+      });
+    }
+  }
+
+  return result;
 }
 
 /**

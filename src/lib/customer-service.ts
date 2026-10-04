@@ -11,6 +11,11 @@ export interface CustomerWalletData {
     birthMonth: number | null;
   };
   balanceInfo: CustomerBalanceInfo;
+  storeSettings: {
+    storeName: string;
+    defaultCashbackPercentage: number;
+    defaultExpirationDays: number;
+  };
   transactions: Array<{
     id: string;
     type: string;
@@ -57,6 +62,16 @@ export async function getCustomerWalletByToken(
   const balanceInfo = await getCustomerBalance(customer.id);
   const firstName = customer.name.trim().split(' ')[0];
 
+  const settings = await prisma.storeSetting.findUnique({
+    where: { id: 'default' },
+  });
+
+  const storeSettings = {
+    storeName: settings?.storeName ?? 'La Marka',
+    defaultCashbackPercentage: settings?.defaultCashbackPercentage ?? 5.0,
+    defaultExpirationDays: settings?.defaultExpirationDays ?? 45,
+  };
+
   return {
     customer: {
       id: customer.id,
@@ -67,6 +82,7 @@ export async function getCustomerWalletByToken(
       birthMonth: customer.birthMonth,
     },
     balanceInfo,
+    storeSettings,
     transactions: customer.transactions.map((t) => ({
       id: t.id,
       type: t.type,

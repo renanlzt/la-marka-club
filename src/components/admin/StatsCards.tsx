@@ -60,16 +60,16 @@ export function StatsCards({ stats }: StatsCardsProps) {
         return (
           <div
             key={idx}
-            className={`p-5.5 rounded-3xl bg-white border border-lamarka-200/90 shadow-card flex flex-col justify-between transition-all hover:shadow-card-hover ${
+            className={`p-5 sm:p-6 rounded-3xl bg-white border border-lamarka-200/90 shadow-card flex flex-col justify-between transition-all hover:shadow-card-hover ${
               card.highlight ? 'ring-2 ring-emerald-600/20' : ''
             }`}
           >
-            <div className="flex items-center justify-between mb-3.5">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-lamarka-500">
+            <div className="flex items-center justify-between mb-3.5 gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-lamarka-500 leading-normal">
                 {card.title}
               </span>
               <div
-                className={`w-9 h-9 rounded-2xl flex items-center justify-center border ${card.color} shadow-2xs`}
+                className={`w-9 h-9 rounded-2xl flex items-center justify-center border shrink-0 ${card.color} shadow-2xs`}
               >
                 <Icon className="w-4 h-4" strokeWidth={1.5} />
               </div>

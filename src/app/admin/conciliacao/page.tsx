@@ -71,7 +71,12 @@ export default function AdminConciliacaoPage() {
       });
 
       if (res.ok) {
-        alert(`Cashback de R$ ${(item.grossAmount * 0.05).toFixed(2)} concedido com sucesso para a cliente!`);
+        const data = await res.json();
+        const granted = data.credit?.credit?.initialAmount ?? data.credit?.initialAmount;
+        const msg = granted !== undefined
+          ? `Cashback de R$ ${Number(granted).toFixed(2)} concedido com sucesso para a cliente!`
+          : 'Cashback concedido com sucesso para a cliente!';
+        alert(msg);
         // Re-processa
         handleProcess();
       }

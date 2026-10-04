@@ -18,6 +18,19 @@ export default function BalcaoPage() {
   const [saleResult, setSaleResult] = useState<CounterSaleResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ name?: string; role?: string } | null>(null);
+  const [storeSettings, setStoreSettings] = useState<{
+    defaultCashbackPercentage: number;
+    defaultExpirationDays: number;
+  }>({
+    defaultCashbackPercentage: 5,
+    defaultExpirationDays: 45,
+  });
+  const [activeCampaign, setActiveCampaign] = useState<{
+    id: string;
+    name: string;
+    type: string;
+    value: number;
+  } | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/auth/me')
@@ -26,6 +39,14 @@ export default function BalcaoPage() {
         if (data.authenticated) {
           setCurrentUser(data.user);
         }
+      })
+      .catch(() => {});
+
+    fetch('/api/balcao')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings) setStoreSettings(data.settings);
+        if (data.activeCampaign !== undefined) setActiveCampaign(data.activeCampaign);
       })
       .catch(() => {});
   }, []);
@@ -124,6 +145,8 @@ export default function BalcaoPage() {
         ) : (
           <SaleForm
             customer={selectedCustomer}
+            settings={storeSettings}
+            activeCampaign={activeCampaign}
             onClearCustomer={() => setSelectedCustomer(null)}
             onSaleComplete={handleSaleComplete}
           />

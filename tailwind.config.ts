@@ -39,6 +39,10 @@ const config: Config = {
         'luxury-subtle': 'rgba(95, 58, 54, 0.08)',
         'luxury-gold': 'rgba(223, 183, 108, 0.3)',
       },
+      spacing: {
+        '4.5': '1.125rem',
+        '5.5': '1.375rem',
+      },
     },
   },
   plugins: [],

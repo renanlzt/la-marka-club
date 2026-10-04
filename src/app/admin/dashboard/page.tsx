@@ -38,7 +38,7 @@ export default async function AdminDashboardPage() {
       <StatsCards stats={stats} />
 
       {/* Destaque do Ciclo de Recompra */}
-      <div className="bg-gradient-to-r from-[#173127] via-[#2C2422] to-[#5F3A36] rounded-3xl p-6 sm:p-7 text-white shadow-luxury relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 border border-white/10">
+      <div className="bg-gradient-to-r from-[#173127] via-[#2C2422] to-[#5F3A36] rounded-3xl p-6 sm:p-7 text-white shadow-luxury relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border border-white/10">
         <div className="max-w-xl">
           <div className="flex items-center gap-2 text-emerald-300 text-[10px] font-semibold uppercase tracking-[0.18em] mb-2">
             <Repeat className="w-3.5 h-3.5 text-emerald-400" strokeWidth={1.5} /> Ciclo de Fidelização Ativo
@@ -51,7 +51,7 @@ export default async function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 text-center shrink-0 min-w-[170px] shadow-2xs">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 text-center shrink-0 w-full sm:w-auto min-w-[170px] shadow-2xs">
           <span className="text-[11px] text-white/80 uppercase tracking-wider block">Clientes Fiéis (2+ compras)</span>
           <span className="text-4xl font-serif font-semibold text-white block mt-1">
             {stats.customersWithRepeatPurchase}

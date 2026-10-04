@@ -6,12 +6,24 @@ import { CounterCustomerSummary, CounterSaleResult } from '@/lib/counter-service
 
 interface SaleFormProps {
   customer: CounterCustomerSummary;
+  settings?: {
+    defaultCashbackPercentage: number;
+    defaultExpirationDays: number;
+  };
+  activeCampaign?: {
+    id: string;
+    name: string;
+    type: string;
+    value: number;
+  } | null;
   onClearCustomer: () => void;
   onSaleComplete: (result: CounterSaleResult) => void;
 }
 
 export function SaleForm({
   customer,
+  settings,
+  activeCampaign,
   onClearCustomer,
   onSaleComplete,
 }: SaleFormProps) {
@@ -47,7 +59,18 @@ export function SaleForm({
     : 0;
 
   const netPayable = Math.max(0, numPurchase - numRedeem);
-  const estimatedCashback = Number(((netPayable * 5) / 100).toFixed(2));
+
+  // Percentual efetivo baseado nas configurações ou campanha ativa
+  let effectivePercentage = settings?.defaultCashbackPercentage ?? 5.0;
+  if (activeCampaign) {
+    if (activeCampaign.type === 'PERCENTAGE_OVERRIDE') {
+      effectivePercentage = activeCampaign.value;
+    } else if (activeCampaign.type === 'MULTIPLIER') {
+      effectivePercentage = Number((effectivePercentage * activeCampaign.value).toFixed(2));
+    }
+  }
+
+  const estimatedCashback = Number(((netPayable * effectivePercentage) / 100).toFixed(2));
 
   const handleToggleCashback = (checked: boolean) => {
     setUseCashback(checked);
@@ -150,7 +173,7 @@ export function SaleForm({
         <div className="mt-4 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/80 text-amber-950 text-xs flex items-center gap-2.5 shadow-2xs">
           <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" strokeWidth={1.5} />
           <span className="font-light">
-            Atenção: <strong className="font-semibold text-amber-900">R$ {customer.balanceInfo.expiringAmount.toFixed(2)}</strong> de cashback expiram em {customer.balanceInfo.expiringInDays} dias! Excelente momento para a cliente abater hoje.
+            Atenção: <strong className="font-semibold text-amber-900">R$ {customer.balanceInfo.expiringAmount.toFixed(2)}</strong> de cashback expiram em {customer.balanceInfo.expiringInDays} {customer.balanceInfo.expiringInDays === 1 ? 'dia' : 'dias'}! Excelente momento para a cliente abater hoje.
           </span>
         </div>
       )}
@@ -248,7 +271,7 @@ export function SaleForm({
 
             <div className="text-right">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 block">
-                Novo Cashback a Ganhar:
+                Novo Cashback a Ganhar ({effectivePercentage}%):
               </span>
               <span className="text-base sm:text-lg font-serif font-bold text-emerald-700 flex items-center gap-1 justify-end">
                 <Sparkles className="w-3.5 h-3.5 text-[#DFB76C]" />

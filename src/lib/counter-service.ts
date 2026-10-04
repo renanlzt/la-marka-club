@@ -168,6 +168,11 @@ export async function processCounterSale(data: {
   const formatBRL = (val: number) =>
     val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  const settings = await prisma.storeSetting.findUnique({
+    where: { id: 'default' },
+  });
+  const fallbackDays = settings?.defaultExpirationDays ?? 45;
+
   // 5. Gera mensagem do WhatsApp
   const templateType = actualRedeemed > 0 ? 'REDEEM' : 'EARN_PURCHASE';
   let whatsAppMessage = await formatWhatsAppMessage(templateType, {
@@ -179,8 +184,8 @@ export async function processCounterSale(data: {
     saldo_total: `R$ ${formatBRL(balanceInfo.availableBalance)}`,
     validade: balanceInfo.nextExpirationDate
       ? new Intl.DateTimeFormat('pt-BR').format(balanceInfo.nextExpirationDate)
-      : '30 dias',
-    dias_para_expirar: String(balanceInfo.expiringInDays ?? 30),
+      : `${fallbackDays} dias`,
+    dias_para_expirar: String(balanceInfo.expiringInDays ?? fallbackDays),
     link_carteira: walletUrl,
   });
 
