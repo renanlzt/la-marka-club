@@ -35,24 +35,40 @@ export function verifyPassword(password: string, stored: string): boolean {
 }
 
 /**
- * Garante a existência do usuário administrador padrão 'admin' / 'admin'
+ * Garante a existência dos usuários padrão de Gestão ('admin') e Balcão ('balcao')
  */
 export async function ensureDefaultAdminUser() {
-  const count = await prisma.adminUser.count();
-  if (count === 0) {
-    const hashedPassword = hashPassword('admin');
+  const adminExists = await prisma.adminUser.findUnique({
+    where: { username: 'admin' },
+  });
+  if (!adminExists) {
     await prisma.adminUser.create({
       data: {
         username: 'admin',
-        password: hashedPassword,
-        name: 'Administrador',
+        password: hashPassword('admin'),
+        name: 'Gestão La Marka',
+        role: 'GESTAO',
+      },
+    });
+  }
+
+  const balcaoExists = await prisma.adminUser.findUnique({
+    where: { username: 'balcao' },
+  });
+  if (!balcaoExists) {
+    await prisma.adminUser.create({
+      data: {
+        username: 'balcao',
+        password: hashPassword('balcao'),
+        name: 'Atendimento Balcão',
+        role: 'BALCAO',
       },
     });
   }
 }
 
 /**
- * Autentica o usuário pelo nome de usuário e senha
+ * Autentica o usuário pelo nome de usuário e senha, retornando perfil de acesso
  */
 export async function authenticateAdmin(username: string, password: string) {
   const cleanUsername = username.trim();
@@ -72,6 +88,7 @@ export async function authenticateAdmin(username: string, password: string) {
     id: user.id,
     username: user.username,
     name: user.name,
+    role: user.role || 'GESTAO',
   };
 }
 
@@ -125,11 +142,15 @@ export async function changeAdminCredentials(
 }
 
 /**
- * Cria token de sessão assinado
+ * Cria token de sessão assinado incluindo o perfil do usuário
  */
-export function createSessionToken(adminId: string, username: string): string {
+export function createSessionToken(
+  adminId: string,
+  username: string,
+  role: string = 'GESTAO'
+): string {
   const timestamp = Date.now().toString();
-  const payload = `${adminId}:${username}:${timestamp}`;
+  const payload = `${adminId}:${username}:${role}:${timestamp}`;
   const hmac = crypto.createHmac('sha256', SECRET_KEY);
   hmac.update(payload);
   const signature = hmac.digest('hex');
@@ -141,14 +162,27 @@ export function createSessionToken(adminId: string, username: string): string {
  */
 export function verifySessionToken(
   token: string
-): { adminId: string; username: string } | null {
+): { adminId: string; username: string; role: string } | null {
   if (!token) return null;
 
   const parts = token.split(':');
-  if (parts.length !== 4) return null;
+  let adminId = '';
+  let username = '';
+  let role = 'GESTAO';
+  let timestamp = '';
+  let signature = '';
+  let payload = '';
 
-  const [adminId, username, timestamp, signature] = parts;
-  const payload = `${adminId}:${username}:${timestamp}`;
+  if (parts.length === 5) {
+    [adminId, username, role, timestamp, signature] = parts;
+    payload = `${adminId}:${username}:${role}:${timestamp}`;
+  } else if (parts.length === 4) {
+    [adminId, username, timestamp, signature] = parts;
+    payload = `${adminId}:${username}:${timestamp}`;
+    role = 'GESTAO';
+  } else {
+    return null;
+  }
 
   const hmac = crypto.createHmac('sha256', SECRET_KEY);
   hmac.update(payload);
@@ -161,5 +195,5 @@ export function verifySessionToken(
     return null;
   }
 
-  return { adminId, username };
+  return { adminId, username, role };
 }

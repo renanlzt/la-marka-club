@@ -66,4 +66,22 @@ describe('Admin Authentication & Security', () => {
     const tampered = token.slice(0, -4) + 'abcd';
     expect(verifySessionToken(tampered)).toBeNull();
   });
+
+  it('should authenticate balcao user and preserve role in session token', async () => {
+    const balcaoUser = await authenticateAdmin('balcao', 'balcao');
+    expect(balcaoUser).toBeDefined();
+    expect(balcaoUser.username).toBe('balcao');
+    expect(balcaoUser.role).toBe('BALCAO');
+
+    const balcaoToken = createSessionToken(balcaoUser.id, balcaoUser.username, balcaoUser.role);
+    const session = verifySessionToken(balcaoToken);
+    expect(session?.role).toBe('BALCAO');
+    expect(session?.username).toBe('balcao');
+
+    const adminUser = await authenticateAdmin('admin', 'admin');
+    expect(adminUser.role).toBe('GESTAO');
+    const adminToken = createSessionToken(adminUser.id, adminUser.username, adminUser.role);
+    const adminSession = verifySessionToken(adminToken);
+    expect(adminSession?.role).toBe('GESTAO');
+  });
 });

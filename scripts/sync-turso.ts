@@ -47,6 +47,14 @@ async function main() {
     }
   }
 
+  // Adicionar coluna role se ainda não existir
+  try {
+    await turso.execute('ALTER TABLE "AdminUser" ADD COLUMN "role" TEXT DEFAULT \'GESTAO\'');
+    console.log('✔ Coluna role adicionada em AdminUser no Turso.');
+  } catch {
+    // Coluna já existe
+  }
+
   // Inserir configurações padrão se não existirem
   await turso.execute(`
     INSERT OR IGNORE INTO "StoreSetting" ("id", "storeName", "defaultCashbackPercentage", "defaultExpirationDays", "birthdayBonusAmount", "birthdayBonusValidityDays", "birthdayBonusDaysBefore", "updatedAt")

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const user = await authenticateAdmin(username, password);
-    const token = createSessionToken(user.id, user.username);
+    const token = createSessionToken(user.id, user.username, user.role);
 
     const response = NextResponse.json({
       success: true,
@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         username: user.username,
         name: user.name,
+        role: user.role,
       },
     });
 
@@ -32,6 +33,15 @@ export async function POST(request: NextRequest) {
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 dias
+    });
+
+    // Cookie de role para a interface
+    response.cookies.set('user_role', user.role, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return response;

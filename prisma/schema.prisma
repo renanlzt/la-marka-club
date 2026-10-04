@@ -43,6 +43,7 @@ model AdminUser {
   username  String   @unique
   password  String   // Hash da senha com salt
   name      String?  @default("Administrador")
+  role      String   @default("GESTAO") // "GESTAO" ou "BALCAO"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
