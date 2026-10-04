@@ -7,6 +7,7 @@ import {
 } from './fifo-engine';
 import { formatWhatsAppMessage, generateWhatsAppLink } from './whatsapp';
 import { getActiveCampaign } from './campaigns-service';
+import { getAppBaseUrl } from './url';
 import { nanoid } from 'nanoid';
 
 export interface CounterCustomerSummary {
@@ -162,11 +163,7 @@ export async function processCounterSale(data: {
   const balanceInfo = await getCustomerBalance(customerId);
   const firstName = customer.name.trim().split(' ')[0];
 
-  const appBaseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
-    (process.env.NODE_ENV === 'production' ? 'https://la-marka-club.vercel.app' : 'http://localhost:3000');
-  const walletUrl = `${appBaseUrl}/c/${customer.magicToken}`;
+  const walletUrl = `${getAppBaseUrl()}/c/${customer.magicToken}`;
 
   const formatBRL = (val: number) =>
     val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

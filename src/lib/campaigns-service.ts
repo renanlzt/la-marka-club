@@ -5,6 +5,7 @@ import {
   getCustomerBalance,
 } from './fifo-engine';
 import { formatWhatsAppMessage, generateWhatsAppLink } from './whatsapp';
+import { getAppBaseUrl } from './url';
 
 export interface CampaignData {
   name: string;
@@ -108,11 +109,7 @@ export async function sendBirthdayGiftAction(customerId: string) {
   const balanceInfo = await getCustomerBalance(customerId);
   const firstName = customer.name.trim().split(' ')[0];
 
-  const appBaseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
-    (process.env.NODE_ENV === 'production' ? 'https://la-marka-club.vercel.app' : 'http://localhost:3000');
-  const walletUrl = `${appBaseUrl}/c/${customer.magicToken}`;
+  const walletUrl = `${getAppBaseUrl()}/c/${customer.magicToken}`;
 
   const whatsAppMessage = await formatWhatsAppMessage('BIRTHDAY', {
     primeiro_nome: firstName,
