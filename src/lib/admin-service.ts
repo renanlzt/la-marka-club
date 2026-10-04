@@ -304,6 +304,7 @@ export async function getAllCustomersWithBalance(query?: string): Promise<Custom
 
 /**
  * Altera o status de vendedora de uma cliente (liga/desliga)
+ * Mantido para compatibilidade retroativa
  */
 export async function toggleCustomerSeller(
   customerId: string,
@@ -311,7 +312,7 @@ export async function toggleCustomerSeller(
 ): Promise<boolean> {
   const customer = await prisma.customer.findUnique({
     where: { id: customerId },
-    select: { isSeller: true },
+    select: { isSeller: true, name: true, phone: true },
   });
 
   if (!customer) {
@@ -330,12 +331,151 @@ export async function toggleCustomerSeller(
   return updated.isSeller;
 }
 
+export interface SellerWithCustomer {
+  id: string;
+  name: string;
+  phone: string | null;
+  code: string | null;
+  active: boolean;
+  customerId: string | null;
+  customer?: {
+    id: string;
+    name: string;
+    phone: string;
+  } | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 /**
- * Retorna todas as clientes marcadas como vendedoras ativas na loja
+ * Retorna todos os vendedores cadastrados (ativos e inativos)
+ */
+export async function getAllSellers(): Promise<SellerWithCustomer[]> {
+  return await prisma.seller.findMany({
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+        },
+      },
+    },
+    orderBy: { name: 'asc' },
+  });
+}
+
+/**
+ * Cadastra um novo vendedor (avulso ou vinculado a um cliente existente)
+ */
+export async function createSeller(data: {
+  name: string;
+  phone?: string;
+  code?: string;
+  customerId?: string;
+}): Promise<SellerWithCustomer> {
+  let sellerName = data.name;
+  let sellerPhone = data.phone;
+
+  if (data.customerId) {
+    const customer = await prisma.customer.findUnique({
+      where: { id: data.customerId },
+    });
+    if (!customer) {
+      throw new Error('Cliente vinculada não encontrada.');
+    }
+    if (!sellerName) {
+      sellerName = customer.name;
+    }
+    if (!sellerPhone && customer.phone) {
+      sellerPhone = customer.phone;
+    }
+  }
+
+  return await prisma.seller.create({
+    data: {
+      name: sellerName,
+      phone: sellerPhone || null,
+      code: data.code || null,
+      customerId: data.customerId || null,
+      active: true,
+    },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Atualiza os dados de um vendedor ou altera seu status ativo
+ */
+export async function updateSeller(
+  id: string,
+  data: {
+    name?: string;
+    phone?: string;
+    code?: string;
+    active?: boolean;
+    customerId?: string | null;
+  }
+) {
+  return await prisma.seller.update({
+    where: { id },
+    data: {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.phone !== undefined && { phone: data.phone || null }),
+      ...(data.code !== undefined && { code: data.code || null }),
+      ...(data.active !== undefined && { active: data.active }),
+      ...(data.customerId !== undefined && { customerId: data.customerId }),
+    },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Exclui um vendedor (mantém o cliente intacto)
+ */
+export async function deleteSeller(id: string): Promise<void> {
+  await prisma.seller.delete({
+    where: { id },
+  });
+}
+
+/**
+ * Retorna todos os vendedores ativos para exibição no terminal de balcão
  */
 export async function getActiveSellers(): Promise<
-  Array<{ id: string; name: string; phone: string }>
+  Array<{ id: string; name: string; phone: string | null }>
 > {
+  const sellers = await prisma.seller.findMany({
+    where: { active: true },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+    },
+    orderBy: { name: 'asc' },
+  });
+
+  if (sellers.length > 0) {
+    return sellers;
+  }
+
+  // Fallback para clientes marcados como vendedora na versão legada
   return await prisma.customer.findMany({
     where: { isSeller: true },
     select: {

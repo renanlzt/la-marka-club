@@ -1,86 +1,106 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { prisma } from '../src/lib/db';
-import { toggleCustomerSeller, getActiveSellers } from '../src/lib/admin-service';
-import { processCounterSale } from '../src/lib/counter-service';
-import { nanoid } from 'nanoid';
+import {
+  getAllSellers,
+  createSeller,
+  updateSeller,
+  deleteSeller,
+  getActiveSellers,
+} from '../src/lib/admin-service';
 
-describe('Salespersons (Vendedoras) Management & Point of Sale Selection', () => {
-  let customerAId: string;
-  let customerBId: string;
-  let buyerId: string;
-
+describe('Gestão de Vendedores (Seller Entity)', () => {
   beforeEach(async () => {
-    // Cliente A
-    const custA = await prisma.customer.create({
-      data: {
-        name: 'Carol Martins',
-        phone: `1197${Math.floor(1000000 + Math.random() * 9000000)}`,
-        magicToken: `tk_${nanoid(20)}`,
-        isSeller: false,
-      },
-    });
-    customerAId = custA.id;
-
-    // Cliente B
-    const custB = await prisma.customer.create({
-      data: {
-        name: 'Juliana Paes',
-        phone: `1196${Math.floor(1000000 + Math.random() * 9000000)}`,
-        magicToken: `tk_${nanoid(20)}`,
-        isSeller: true,
-      },
-    });
-    customerBId = custB.id;
-
-    // Cliente Compradora
-    const buyer = await prisma.customer.create({
-      data: {
-        name: 'Renata Vasconcelos',
-        phone: `1195${Math.floor(1000000 + Math.random() * 9000000)}`,
-        magicToken: `tk_${nanoid(20)}`,
-      },
-    });
-    buyerId = buyer.id;
+    // Limpa a tabela de vendedores e clientes de teste
+    await prisma.seller.deleteMany();
+    await prisma.cashbackTransaction.deleteMany();
+    await prisma.cashbackCredit.deleteMany();
+    await prisma.customer.deleteMany();
   });
 
-  it('should list only active sellers', async () => {
-    const sellers = await getActiveSellers();
-    const hasJuliana = sellers.some((s) => s.id === customerBId);
-    const hasCarol = sellers.some((s) => s.id === customerAId);
-
-    expect(hasJuliana).toBe(true);
-    expect(hasCarol).toBe(false);
-  });
-
-  it('should toggle customer seller status on and off', async () => {
-    // Torna Carol vendedora
-    const newStatus1 = await toggleCustomerSeller(customerAId, true);
-    expect(newStatus1).toBe(true);
-
-    let sellers = await getActiveSellers();
-    expect(sellers.some((s) => s.id === customerAId)).toBe(true);
-
-    // Remove status de vendedora
-    const newStatus2 = await toggleCustomerSeller(customerAId, false);
-    expect(newStatus2).toBe(false);
-
-    sellers = await getActiveSellers();
-    expect(sellers.some((s) => s.id === customerAId)).toBe(false);
-  });
-
-  it('should record selected seller name as operatorName in counter sale', async () => {
-    const sale = await processCounterSale({
-      customerId: buyerId,
-      purchaseAmount: 200.0,
-      operatorName: 'Juliana Paes',
+  it('deve cadastrar uma vendedora avulsa com sucesso', async () => {
+    const seller = await createSeller({
+      name: 'Mariana Silva',
+      phone: '11988887777',
+      code: 'VEND-01',
     });
 
-    const tx = await prisma.cashbackTransaction.findFirst({
-      where: { customerId: buyerId },
-      orderBy: { createdAt: 'desc' },
+    expect(seller.id).toBeDefined();
+    expect(seller.name).toBe('Mariana Silva');
+    expect(seller.phone).toBe('11988887777');
+    expect(seller.code).toBe('VEND-01');
+    expect(seller.active).toBe(true);
+    expect(seller.customerId).toBeNull();
+  });
+
+  it('deve cadastrar uma vendedora vinculada a uma cliente existente', async () => {
+    const customer = await prisma.customer.create({
+      data: {
+        name: 'Camila Pitanga',
+        phone: '11977776666',
+        magicToken: 'camila-token-123',
+      },
     });
 
-    expect(tx).toBeDefined();
-    expect(tx?.operatorName).toBe('Juliana Paes');
+    const seller = await createSeller({
+      name: 'Camila Pitanga',
+      customerId: customer.id,
+    });
+
+    expect(seller.customerId).toBe(customer.id);
+    expect(seller.name).toBe('Camila Pitanga');
+
+    const all = await getAllSellers();
+    expect(all.length).toBe(1);
+    expect(all[0].customer?.name).toBe('Camila Pitanga');
+  });
+
+  it('deve retornar apenas vendedoras ativas em getActiveSellers()', async () => {
+    const s1 = await createSeller({ name: 'Vendedora Ativa' });
+    const s2 = await createSeller({ name: 'Vendedora Inativa' });
+
+    await updateSeller(s2.id, { active: false });
+
+    const activeList = await getActiveSellers();
+    expect(activeList.length).toBe(1);
+    expect(activeList[0].id).toBe(s1.id);
+    expect(activeList[0].name).toBe('Vendedora Ativa');
+  });
+
+  it('deve atualizar dados e alternar status de ativação da vendedora', async () => {
+    const seller = await createSeller({ name: 'Juliana Paes' });
+
+    const updated = await updateSeller(seller.id, {
+      name: 'Juliana Paes Modificada',
+      active: false,
+    });
+
+    expect(updated.name).toBe('Juliana Paes Modificada');
+    expect(updated.active).toBe(false);
+  });
+
+  it('deve excluir a vendedora mantendo a cliente vinculada intacta', async () => {
+    const customer = await prisma.customer.create({
+      data: {
+        name: 'Cliente Segura',
+        phone: '11955554444',
+        magicToken: 'token-seguro-123',
+      },
+    });
+
+    const seller = await createSeller({
+      name: 'Vendedora Deletável',
+      customerId: customer.id,
+    });
+
+    await deleteSeller(seller.id);
+
+    const sellers = await getAllSellers();
+    expect(sellers.length).toBe(0);
+
+    const customerStillExists = await prisma.customer.findUnique({
+      where: { id: customer.id },
+    });
+    expect(customerStillExists).not.toBeNull();
+    expect(customerStillExists?.name).toBe('Cliente Segura');
   });
 });

@@ -4,7 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 model Customer {
@@ -16,12 +17,25 @@ model Customer {
   birthMonth   Int?              // Mês do aniversário (1-12)
   magicToken   String            @unique // Token para acesso à carteira da cliente
   notes        String?
-  isSeller     Boolean           @default(false) // Indica se esta cliente também atua como vendedora
+  isSeller     Boolean           @default(false) // Deprecado em prol da entidade Seller
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   
+  seller       Seller?           // Vínculo opcional se esta cliente for vendedora
   credits      CashbackCredit[]
   transactions CashbackTransaction[]
+}
+
+model Seller {
+  id         String    @id @default(cuid())
+  name       String
+  phone      String?
+  code       String?   // Código interno opcional (ex: VEND-01)
+  active     Boolean   @default(true)
+  customerId String?   @unique
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 model AdminUser {

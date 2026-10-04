@@ -164,7 +164,8 @@ export async function processCounterSale(data: {
 
   const appBaseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.NODE_ENV === 'production' ? 'https://club.lamarka.com.br' : 'http://localhost:3000');
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
+    (process.env.NODE_ENV === 'production' ? 'https://la-marka-club.vercel.app' : 'http://localhost:3000');
   const walletUrl = `${appBaseUrl}/c/${customer.magicToken}`;
 
   const formatBRL = (val: number) =>
