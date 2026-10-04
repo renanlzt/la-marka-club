@@ -184,6 +184,12 @@ export function verifySessionToken(
     return null;
   }
 
+  // Validação de expiração (7 dias)
+  const createdAt = parseInt(timestamp, 10);
+  if (isNaN(createdAt) || createdAt <= 0 || Date.now() - createdAt > 7 * 24 * 60 * 60 * 1000) {
+    return null;
+  }
+
   const hmac = crypto.createHmac('sha256', SECRET_KEY);
   hmac.update(payload);
   const expectedSignature = hmac.digest('hex');

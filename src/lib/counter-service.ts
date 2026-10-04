@@ -127,6 +127,18 @@ export async function processCounterSale(data: {
 }): Promise<CounterSaleResult> {
   const { customerId, purchaseAmount, redeemAmount = 0, operatorName = 'Caixa' } = data;
 
+  if (!customerId || typeof customerId !== 'string') {
+    throw new Error('ID da cliente é obrigatório.');
+  }
+
+  if (typeof purchaseAmount !== 'number' || isNaN(purchaseAmount) || purchaseAmount <= 0) {
+    throw new Error('O valor da compra deve ser um número positivo maior que zero.');
+  }
+
+  if (typeof redeemAmount !== 'number' || isNaN(redeemAmount) || redeemAmount < 0) {
+    throw new Error('O valor de resgate não pode ser negativo.');
+  }
+
   if (redeemAmount > purchaseAmount) {
     throw new Error('O valor de resgate não pode ser maior que o valor da compra.');
   }

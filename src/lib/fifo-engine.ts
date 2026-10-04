@@ -136,6 +136,14 @@ export async function grantCashback(
   operatorName = 'Balcão',
   campaignId?: string
 ) {
+  if (!customerId || typeof customerId !== 'string') {
+    throw new Error('ID da cliente é obrigatório.');
+  }
+
+  if (typeof purchaseAmount !== 'number' || isNaN(purchaseAmount) || purchaseAmount <= 0) {
+    throw new Error('O valor da compra deve ser um número positivo maior que zero.');
+  }
+
   const settings = await prisma.storeSetting.findUnique({
     where: { id: 'default' },
   });
