@@ -61,7 +61,7 @@ export function AdminSidebar() {
               src="/logo.png"
               alt="La Marka"
               fill
-              className="object-cover"
+              className="object-contain p-1"
               priority
             />
           </div>
@@ -163,7 +163,7 @@ export function AdminSidebar() {
               src="/logo.png"
               alt="La Marka"
               fill
-              className="object-cover"
+              className="object-contain p-1"
               priority
             />
           </div>

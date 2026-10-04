@@ -24,7 +24,7 @@ export default function HomePage() {
       <nav className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center justify-between z-10 gap-2">
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           <div className="w-10 h-10 sm:w-11 sm:h-11 relative rounded-2xl overflow-hidden border border-lamarka-200 shadow-2xs bg-white shrink-0">
-            <Image src="/logo.png" alt="La Marka" fill className="object-cover" priority />
+            <Image src="/logo.png" alt="La Marka" fill className="object-contain p-1" priority />
           </div>
           <div>
             <span className="font-serif font-semibold text-base sm:text-lg text-lamarka-900 leading-tight block">
@@ -64,7 +64,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="w-full max-w-4xl mx-auto px-6 py-10 sm:py-16 text-center z-10 flex flex-col items-center">
         <div className="w-28 h-28 sm:w-36 sm:h-36 relative mb-6 rounded-3xl overflow-hidden shadow-luxury border-2 border-white ring-1 ring-lamarka-300 bg-white">
-          <Image src="/logo.png" alt="La Marka Moda Feminina" fill className="object-cover" priority />
+          <Image src="/logo.png" alt="La Marka Moda Feminina" fill className="object-contain p-2" priority />
         </div>
 
         <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/95 border border-lamarka-300 text-lamarka-800 text-[11px] font-semibold tracking-[0.2em] uppercase mb-4 shadow-2xs">

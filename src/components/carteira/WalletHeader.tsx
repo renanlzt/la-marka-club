@@ -15,7 +15,7 @@ export function WalletHeader({ firstName, maskedPhone }: WalletHeaderProps) {
           src="/logo.png"
           alt="La Marka"
           fill
-          className="object-cover"
+          className="object-contain p-1.5"
           priority
         />
       </div>

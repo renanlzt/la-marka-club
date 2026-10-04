@@ -54,7 +54,7 @@ export default function PortalPage() {
       <div className="w-full max-w-4xl mx-auto flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 relative rounded-xl overflow-hidden border border-lamarka-200 shadow-2xs bg-white shrink-0">
-            <Image src="/logo.png" alt="La Marka" fill className="object-cover" priority />
+            <Image src="/logo.png" alt="La Marka" fill className="object-contain p-1" priority />
           </div>
           <div>
             <h2 className="font-serif font-semibold text-base text-lamarka-900 leading-tight">
