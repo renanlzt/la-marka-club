@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, User, Eye, EyeOff, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 
@@ -111,9 +112,10 @@ function LoginForm() {
                   required
                   autoFocus
                   autoCapitalize="none"
+                  autoComplete="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Ex: admin ou balcao"
+                  placeholder="Digite seu usuário"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-lamarka-200 focus:outline-none focus:ring-2 focus:ring-lamarka-400 text-xs sm:text-sm text-lamarka-900 placeholder:text-lamarka-400 transition-all"
                 />
               </div>
@@ -129,9 +131,10 @@ function LoginForm() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Digite sua senha"
                   className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-lamarka-200 focus:outline-none focus:ring-2 focus:ring-lamarka-400 text-xs sm:text-sm text-lamarka-900 placeholder:text-lamarka-400 transition-all"
                 />
                 <button
@@ -164,21 +167,14 @@ function LoginForm() {
             </button>
           </form>
 
-          {/* Dica de Acessos */}
-          <div className="mt-6 pt-5 border-t border-lamarka-100 flex flex-col gap-2">
-            <span className="text-[10px] text-lamarka-400 font-semibold uppercase tracking-wider">
-              Perfis de Acesso:
-            </span>
-            <div className="grid grid-cols-2 gap-2 text-[11px] text-lamarka-600 bg-lamarka-50/60 p-2.5 rounded-xl border border-lamarka-100">
-              <div>
-                <strong className="text-lamarka-800 block">Gestão / Admin:</strong>
-                <span className="font-mono text-[10px] text-lamarka-500">admin / admin</span>
-              </div>
-              <div>
-                <strong className="text-lamarka-800 block">Frente de Caixa:</strong>
-                <span className="font-mono text-[10px] text-lamarka-500">balcao / balcao</span>
-              </div>
-            </div>
+          {/* Voltar para a Loja */}
+          <div className="mt-5 pt-4 border-t border-lamarka-100 text-center">
+            <Link
+              href="/"
+              className="text-xs text-lamarka-500 hover:text-lamarka-800 transition-colors inline-flex items-center gap-1 font-light"
+            >
+              ← Voltar para o início
+            </Link>
           </div>
         </div>
 
