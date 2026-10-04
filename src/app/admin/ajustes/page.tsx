@@ -130,7 +130,7 @@ export default function AdminAjustesPage() {
         </form>
 
         {customer && (
-          <div className="mt-4 p-4.5 rounded-2xl bg-lamarka-50/80 border border-lamarka-200/80 flex items-center justify-between shadow-2xs">
+          <div className="mt-4 p-4.5 rounded-2xl bg-lamarka-50/80 border border-lamarka-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
             <div>
               <span className="text-[10px] uppercase font-semibold text-lamarka-500 tracking-wider block">Cliente Selecionada</span>
               <h3 className="text-base font-serif font-medium text-lamarka-900">{customer.name}</h3>

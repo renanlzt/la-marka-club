@@ -166,7 +166,7 @@ export function SecuritySettings() {
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-luxury hover:shadow-luxury-lg flex items-center gap-2 disabled:opacity-50"
+            className="w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-luxury hover:shadow-luxury-lg flex items-center justify-center gap-2 disabled:opacity-50 text-center"
           >
             {loading ? 'Salvando...' : 'Atualizar Credenciais de Acesso'}
           </button>

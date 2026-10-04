@@ -200,33 +200,35 @@ export function SaleForm({
             </label>
 
             {useCashback && (
-              <div className="pt-2.5 border-t border-lamarka-200/70 flex items-center gap-3">
-                <span className="text-xs text-lamarka-700 whitespace-nowrap">
+              <div className="pt-2.5 border-t border-lamarka-200/70 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <span className="text-xs text-lamarka-700 shrink-0">
                   Valor a abater:
                 </span>
-                <div className="relative flex-1">
-                  <span className="absolute left-3 top-2 text-xs font-semibold text-lamarka-400">
-                    R$
-                  </span>
-                  <input
-                    type="text"
-                    value={redeemAmount}
-                    onChange={(e) => setRedeemAmount(e.target.value)}
-                    placeholder="0,00"
-                    className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-lamarka-300 text-xs font-bold text-lamarka-900 focus:outline-none focus:border-lamarka-600 bg-white shadow-2xs"
-                  />
+                <div className="flex items-center gap-2 flex-1 w-full">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-2 text-xs font-semibold text-lamarka-400">
+                      R$
+                    </span>
+                    <input
+                      type="text"
+                      value={redeemAmount}
+                      onChange={(e) => setRedeemAmount(e.target.value)}
+                      placeholder="0,00"
+                      className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-lamarka-300 text-xs font-bold text-lamarka-900 focus:outline-none focus:border-lamarka-600 bg-white shadow-2xs"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setRedeemAmount(
+                        Math.min(availableBalance, numPurchase > 0 ? numPurchase : availableBalance).toFixed(2)
+                      )
+                    }
+                    className="px-3 py-1.5 rounded-xl bg-lamarka-200 hover:bg-lamarka-300 text-lamarka-800 text-[11px] font-semibold transition-colors shadow-2xs shrink-0 whitespace-nowrap"
+                  >
+                    Usar Máximo
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setRedeemAmount(
-                      Math.min(availableBalance, numPurchase > 0 ? numPurchase : availableBalance).toFixed(2)
-                    )
-                  }
-                  className="px-3 py-1.5 rounded-xl bg-lamarka-200 hover:bg-lamarka-300 text-lamarka-800 text-[11px] font-semibold transition-colors shadow-2xs"
-                >
-                  Usar Máximo
-                </button>
               </div>
             )}
           </div>
@@ -258,15 +260,15 @@ export function SaleForm({
 
         {/* Seleção de Vendedora */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center justify-between mb-1.5 gap-2">
             <label className="text-[11px] font-semibold uppercase tracking-wider text-lamarka-700 flex items-center gap-1.5">
-              <UserCheck className="w-3.5 h-3.5 text-lamarka-600" strokeWidth={1.5} />
-              Vendedora Responsável:
+              <UserCheck className="w-3.5 h-3.5 text-lamarka-600 shrink-0" strokeWidth={1.5} />
+              <span>Vendedora Responsável:</span>
             </label>
             <a
-              href="/admin/clientes"
+              href="/admin/vendedores"
               target="_blank"
-              className="text-[10px] text-lamarka-500 hover:text-lamarka-800 underline"
+              className="text-[10px] text-lamarka-500 hover:text-lamarka-800 underline shrink-0"
             >
               Gerenciar vendedoras
             </a>
@@ -291,10 +293,10 @@ export function SaleForm({
         <button
           type="submit"
           disabled={submitting || numPurchase <= 0}
-          className="w-full py-4 px-6 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-luxury hover:shadow-luxury-lg mt-2"
+          className="w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white font-semibold text-xs sm:text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-luxury hover:shadow-luxury-lg mt-2 text-center"
         >
-          <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
-          {submitting ? 'Lançando Venda...' : 'Finalizar Venda & Conceder Cashback'}
+          <ShoppingBag className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+          <span>{submitting ? 'Lançando Venda...' : 'Finalizar Venda & Conceder Cashback'}</span>
         </button>
       </form>
     </div>

@@ -286,22 +286,22 @@ export default function AdminVendedoresPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
           <Link
             href="/balcao"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-lamarka-200 hover:bg-lamarka-100 text-lamarka-800 text-xs font-semibold shadow-2xs transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-lamarka-200 hover:bg-lamarka-100 text-lamarka-800 text-xs font-semibold shadow-2xs transition-all shrink-0 whitespace-nowrap"
           >
-            <Store className="w-4 h-4 text-lamarka-600" strokeWidth={1.5} />
-            Ir para o Balcão
+            <Store className="w-4 h-4 text-lamarka-600 shrink-0" strokeWidth={1.5} />
+            <span>Ir para o Balcão</span>
           </Link>
 
           <button
             type="button"
             onClick={handleOpenNewModal}
-            className="inline-flex items-center gap-2 px-4.5 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-luxury hover:shadow-luxury-lg transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-luxury hover:shadow-luxury-lg transition-all shrink-0 whitespace-nowrap"
           >
-            <Plus className="w-4 h-4 text-[#DFB76C]" strokeWidth={2} />
-            Nova Vendedora
+            <Plus className="w-4 h-4 text-[#DFB76C] shrink-0" strokeWidth={2} />
+            <span>Nova Vendedora</span>
           </button>
         </div>
       </div>

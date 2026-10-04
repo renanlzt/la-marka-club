@@ -164,7 +164,7 @@ export function SettingsForm({ initialSettings, onSave }: SettingsFormProps) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-lamarka-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-lamarka-100 gap-3">
         <div>
           {success && (
             <span className="text-xs text-emerald-700 font-medium flex items-center gap-1">
@@ -176,7 +176,7 @@ export function SettingsForm({ initialSettings, onSave }: SettingsFormProps) {
         <button
           type="submit"
           disabled={saving}
-          className="px-6 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-luxury hover:shadow-luxury-lg flex items-center gap-2"
+          className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-luxury hover:shadow-luxury-lg flex items-center justify-center gap-2"
         >
           <Save className="w-3.5 h-3.5" strokeWidth={1.5} />
           {saving ? 'Salvando...' : 'Salvar Parâmetros'}

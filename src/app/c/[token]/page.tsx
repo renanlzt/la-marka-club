@@ -4,7 +4,7 @@ import { getCustomerWalletByToken } from '@/lib/customer-service';
 import { WalletHeader } from '@/components/carteira/WalletHeader';
 import { BalanceCard } from '@/components/carteira/BalanceCard';
 import { TransactionHistory } from '@/components/carteira/TransactionHistory';
-import { Sparkles, Store, MapPin } from 'lucide-react';
+import { Sparkles, Store, MapPin, MessageCircle } from 'lucide-react';
 
 interface CustomerWalletPageProps {
   params: Promise<{
@@ -21,7 +21,7 @@ export default async function CustomerWalletPage({
   if (!walletData) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-lamarka-100/50 via-lamarka-50 to-white flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-full max-w-sm bg-white rounded-3xl border border-lamarka-200 p-8 shadow-sm flex flex-col items-center gap-4">
+        <div className="w-full max-w-sm bg-white rounded-3xl border border-lamarka-200 p-8 shadow-card flex flex-col items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-lamarka-100 text-lamarka-700 flex items-center justify-center">
             <Store className="w-7 h-7" />
           </div>
@@ -29,20 +29,23 @@ export default async function CustomerWalletPage({
             Carteira Não Localizada
           </h1>
           <p className="text-xs text-lamarka-600 font-light leading-relaxed">
-            Este link de acesso pode estar incompleto ou a cliente ainda não foi cadastrada no La Marka Club.
+            Este link de acesso pode estar desatualizado ou a cliente ainda não foi cadastrada no La Marka Club.
           </p>
-          <div className="w-full pt-4 border-t border-lamarka-100 flex flex-col gap-2">
+          <div className="w-full pt-4 border-t border-lamarka-100 flex flex-col gap-2.5">
             <a
-              href="/balcao"
-              className="w-full py-2.5 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-colors"
+              href="https://wa.me/5549999266069?text=Ol%C3%A1%2C%20gostaria%20de%20consultar%20meu%20saldo%20do%20La%20Marka%20Club"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-2 shadow-2xs"
             >
-              Ir para o Caixa / Balcão
+              <MessageCircle className="w-4 h-4 shrink-0" />
+              <span>Falar no WhatsApp da Loja</span>
             </a>
             <a
-              href="/admin/clientes"
-              className="w-full py-2.5 rounded-xl bg-lamarka-100 hover:bg-lamarka-200 text-lamarka-800 text-xs font-semibold transition-colors"
+              href="/"
+              className="w-full py-2.5 rounded-xl bg-lamarka-100 hover:bg-lamarka-200 text-lamarka-800 text-xs font-semibold transition-colors text-center"
             >
-              Consultar Clientes no Admin
+              Conhecer a La Marka
             </a>
           </div>
         </div>

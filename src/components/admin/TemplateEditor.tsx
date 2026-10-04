@@ -86,7 +86,7 @@ export function TemplateEditor({
 
   return (
     <div className="bg-white rounded-3xl border border-lamarka-200/90 p-6 sm:p-7 shadow-card flex flex-col gap-5">
-      <div className="flex items-center justify-between border-b border-lamarka-100 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-lamarka-100 pb-4 gap-2">
         <div>
           <h3 className="text-lg font-serif font-medium text-lamarka-900">
             Editor de Mensagens de WhatsApp
@@ -97,11 +97,11 @@ export function TemplateEditor({
         </div>
 
         {currentTemplate?.isCustomized ? (
-          <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+          <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 self-start sm:self-auto shrink-0">
             Mensagem Personalizada
           </span>
         ) : (
-          <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+          <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 self-start sm:self-auto shrink-0">
             Padrão Oficial La Marka
           </span>
         )}
@@ -153,18 +153,18 @@ export function TemplateEditor({
       </div>
 
       {/* Ações */}
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2 gap-3">
         <button
           type="button"
           onClick={handleReset}
           disabled={saving}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs text-lamarka-600 hover:text-lamarka-900 hover:bg-lamarka-100 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs text-lamarka-600 hover:text-lamarka-900 hover:bg-lamarka-100 transition-colors self-start sm:self-auto"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           Restaurar Padrão Oficial
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 self-end sm:self-auto">
           {success && (
             <span className="text-xs text-emerald-700 font-medium flex items-center gap-1">
               <Check className="w-4 h-4" /> Salvo com sucesso!
@@ -174,7 +174,7 @@ export function TemplateEditor({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-luxury hover:shadow-luxury-lg flex items-center gap-2"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-luxury hover:shadow-luxury-lg flex items-center justify-center gap-2"
           >
             {saving ? 'Salvando...' : 'Salvar Alterações'}
           </button>

@@ -93,10 +93,11 @@ export default function BalcaoPage() {
           {currentUser?.role === 'GESTAO' && (
             <Link
               href="/admin/dashboard"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-lamarka-200 bg-white hover:bg-lamarka-50 text-xs font-medium text-lamarka-800 transition-all shadow-2xs hover:shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl border border-lamarka-200 bg-white hover:bg-lamarka-50 text-xs font-medium text-lamarka-800 transition-all shadow-2xs hover:shadow-xs shrink-0"
             >
-              <ShieldCheck className="w-4 h-4 text-lamarka-700" strokeWidth={1.5} />
-              <span>Painel de Gestão</span>
+              <ShieldCheck className="w-4 h-4 text-lamarka-700 shrink-0" strokeWidth={1.5} />
+              <span className="hidden sm:inline">Painel de Gestão</span>
+              <span className="sm:hidden">Gestão</span>
             </Link>
           )}
 

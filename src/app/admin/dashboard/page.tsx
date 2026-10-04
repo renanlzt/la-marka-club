@@ -78,8 +78,8 @@ export default async function AdminDashboardPage() {
             Nenhuma movimentação recente registrada.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto -mx-2 px-2">
+            <table className="w-full text-left text-xs min-w-[600px]">
               <thead>
                 <tr className="border-b border-lamarka-100 text-lamarka-500 uppercase tracking-[0.12em] text-[10px]">
                   <th className="pb-3 font-semibold">Data / Hora</th>

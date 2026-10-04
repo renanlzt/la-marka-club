@@ -97,14 +97,14 @@ export default function AdminConciliacaoPage() {
 
       {/* Caixa de Importação */}
       <div className="bg-white rounded-3xl border border-lamarka-200/90 p-6 sm:p-7 shadow-card flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-lamarka-800">
             Importar Relatório de Vendas (CSV ou Texto de Cupons)
           </h2>
           <button
             type="button"
             onClick={handlePasteDemo}
-            className="text-xs text-lamarka-600 hover:text-lamarka-900 underline font-light transition-colors"
+            className="text-xs text-lamarka-600 hover:text-lamarka-900 underline font-light transition-colors self-start sm:self-auto"
           >
             Colar dados de exemplo
           </button>
@@ -207,8 +207,8 @@ export default function AdminConciliacaoPage() {
                 {reconciliation.matched.length === 0 ? (
                   <p className="text-xs text-lamarka-500 py-6 text-center">Nenhuma venda conciliada.</p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                  <div className="overflow-x-auto -mx-2 px-2">
+                    <table className="w-full text-left text-xs min-w-[550px]">
                       <thead>
                         <tr className="border-b border-lamarka-100 text-lamarka-500 uppercase text-[10px]">
                           <th className="pb-2">Cupom / ID</th>
@@ -244,8 +244,8 @@ export default function AdminConciliacaoPage() {
                 {reconciliation.unmatchedErp.length === 0 ? (
                   <p className="text-xs text-lamarka-500 py-6 text-center">Todas as vendas fiscais foram registradas no clube!</p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                  <div className="overflow-x-auto -mx-2 px-2">
+                    <table className="w-full text-left text-xs min-w-[550px]">
                       <thead>
                         <tr className="border-b border-lamarka-100 text-lamarka-500 uppercase text-[10px]">
                           <th className="pb-2">Cupom</th>
@@ -287,8 +287,8 @@ export default function AdminConciliacaoPage() {
                 {reconciliation.unmatchedClub.length === 0 ? (
                   <p className="text-xs text-lamarka-500 py-6 text-center">Nenhuma venda isolada no clube.</p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                  <div className="overflow-x-auto -mx-2 px-2">
+                    <table className="w-full text-left text-xs min-w-[550px]">
                       <thead>
                         <tr className="border-b border-lamarka-100 text-lamarka-500 uppercase text-[10px]">
                           <th className="pb-2">Cliente</th>

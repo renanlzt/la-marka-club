@@ -95,10 +95,10 @@ export function RewardSuccessModal({
         <div className="flex flex-col gap-2.5">
           <button
             onClick={handleOpenWhatsApp}
-            className="w-full py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2.5 group"
+            className="w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group text-center leading-snug"
           >
-            <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={1.5} />
-            Enviar Mensagem no WhatsApp (1 Clique)
+            <MessageCircle className="w-4.5 h-4.5 shrink-0 group-hover:scale-110 transition-transform" strokeWidth={1.5} />
+            <span>Enviar Mensagem no WhatsApp (1 Clique)</span>
           </button>
 
           <button
