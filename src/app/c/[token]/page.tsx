@@ -77,6 +77,40 @@ export default async function CustomerWalletPage({
           customerName={customer.firstName}
         />
 
+        {/* Banner de Campanha Especial Ativa na Boutique */}
+        {walletData.activeCampaign && (
+          <div className="w-full mt-3 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/15 border border-amber-300/70 rounded-2xl p-4 shadow-card">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+                <Sparkles className="w-4 h-4 text-amber-700" strokeWidth={1.8} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                    Campanha Especial Ativa
+                  </span>
+                  <span className="text-[11px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full">
+                    {walletData.activeCampaign.type === 'PERCENTAGE_OVERRIDE'
+                      ? `${walletData.activeCampaign.value}% de Cashback`
+                      : `${walletData.activeCampaign.value}x Multiplicador`}
+                  </span>
+                </div>
+                <h4 className="text-sm font-serif font-bold text-lamarka-900 mt-0.5">
+                  {walletData.activeCampaign.name}
+                </h4>
+                {walletData.activeCampaign.description && (
+                  <p className="text-xs text-lamarka-700 font-light mt-0.5 leading-snug">
+                    {walletData.activeCampaign.description}
+                  </p>
+                )}
+                <p className="text-[10px] text-lamarka-500 font-light mt-1.5">
+                  Válido até {new Intl.DateTimeFormat('pt-BR').format(new Date(walletData.activeCampaign.endsAt))} nas compras presenciais na boutique.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Barra de Progresso VIP do Clube */}
         <div className="w-full mt-3">
           <VipProgressCard

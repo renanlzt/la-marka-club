@@ -156,15 +156,20 @@ export async function grantCashback(
   const validityDays = settings?.defaultExpirationDays ?? 45;
 
   // Verifica se há campanha ativa aplicável
+  let campaignName: string | undefined = undefined;
   if (campaignId) {
     const campaign = await prisma.campaign.findUnique({
       where: { id: campaignId },
     });
     if (campaign && campaign.isActive) {
-      if (campaign.type === 'PERCENTAGE_OVERRIDE') {
-        percentage = campaign.value;
-      } else if (campaign.type === 'MULTIPLIER') {
-        percentage = Number((percentage * campaign.value).toFixed(2));
+      campaignName = campaign.name;
+      // Aplica regra de recálculo apenas se o percentual não foi pré-calculado na origem
+      if (customPercentage === undefined) {
+        if (campaign.type === 'PERCENTAGE_OVERRIDE') {
+          percentage = campaign.value;
+        } else if (campaign.type === 'MULTIPLIER') {
+          percentage = Number((percentage * campaign.value).toFixed(2));
+        }
       }
     }
   }
@@ -207,13 +212,17 @@ export async function grantCashback(
 
     // 3. Registra a transação no extrato
     const formattedPurchase = purchaseAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const descriptionText = campaignName
+      ? `Compra de R$ ${formattedPurchase} (${percentage}% cashback - ${campaignName})`
+      : `Compra de R$ ${formattedPurchase} (${percentage}% cashback)`;
+
     const transaction = await tx.cashbackTransaction.create({
       data: {
         customerId,
         type: 'EARN',
         amount: cashbackEarned,
         balanceAfter: newBalance,
-        description: `Compra de R$ ${formattedPurchase} (${percentage}% cashback)`,
+        description: descriptionText,
         operatorName,
       },
     });

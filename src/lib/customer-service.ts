@@ -1,6 +1,7 @@
 import { prisma } from './db';
 import { getCustomerBalance, CustomerBalanceInfo } from './fifo-engine';
 import { getCustomerVipTier, VipTierInfo } from './vip-tier-service';
+import { getActiveCampaign } from './campaigns-service';
 
 export interface CustomerWalletData {
   customer: {
@@ -18,6 +19,13 @@ export interface CustomerWalletData {
     defaultExpirationDays: number;
   };
   vipTier?: VipTierInfo;
+  activeCampaign?: {
+    name: string;
+    description?: string | null;
+    type: string;
+    value: number;
+    endsAt: Date;
+  } | null;
   transactions: Array<{
     id: string;
     type: string;
@@ -617,6 +625,7 @@ export async function getCustomerWalletByToken(
   const balanceInfo = await getCustomerBalance(customer.id);
   const firstName = customer.name.trim().split(' ')[0];
   const vipTier = await getCustomerVipTier(customer.id);
+  const activeCampaign = await getActiveCampaign();
 
   const settings = await prisma.storeSetting.findUnique({
     where: { id: 'default' },
@@ -640,6 +649,15 @@ export async function getCustomerWalletByToken(
     balanceInfo,
     storeSettings,
     vipTier,
+    activeCampaign: activeCampaign
+      ? {
+          name: activeCampaign.name,
+          description: activeCampaign.description,
+          type: activeCampaign.type,
+          value: activeCampaign.value,
+          endsAt: activeCampaign.endsAt,
+        }
+      : null,
     transactions: customer.transactions.map((t) => ({
       id: t.id,
       type: t.type,

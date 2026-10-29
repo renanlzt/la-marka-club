@@ -189,9 +189,16 @@ export async function processCounterSale(data: {
 
     if (typeof data.customCashbackPercentage === 'number') {
       percentageToApply = data.customCashbackPercentage;
-      campaignIdToPass = undefined; // Já calculado com precisão na origem
+      campaignIdToPass = activeCampaign?.id; // Mantém o vínculo de atribuição do crédito à campanha ativa
     } else if (data.applyVipTier) {
       percentageToApply = initialVipTier.percentage;
+      if (activeCampaign) {
+        if (activeCampaign.type === 'PERCENTAGE_OVERRIDE') {
+          percentageToApply = activeCampaign.value;
+        } else if (activeCampaign.type === 'MULTIPLIER') {
+          percentageToApply = Number((initialVipTier.percentage * activeCampaign.value).toFixed(2));
+        }
+      }
     }
 
     const earnRes = await grantCashback(

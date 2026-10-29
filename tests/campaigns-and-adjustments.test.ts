@@ -3,11 +3,15 @@ import { prisma } from '../src/lib/db';
 import {
   createCampaign,
   getActiveCampaign,
+  getAllCampaigns,
+  toggleCampaignActive,
+  deleteCampaign,
   getUpcomingBirthdays,
   sendBirthdayGiftAction,
   performManualAdjustment,
 } from '../src/lib/campaigns-service';
 import { grantCashback, getCustomerBalance } from '../src/lib/fifo-engine';
+import { processCounterSale } from '../src/lib/counter-service';
 import { nanoid } from 'nanoid';
 
 describe('Campaigns, Birthdays & Manual Adjustments', () => {
@@ -97,6 +101,76 @@ describe('Campaigns, Birthdays & Manual Adjustments', () => {
     });
     expect(txs.some((t) => t.type === 'MANUAL_ADD')).toBe(true);
     expect(txs.some((t) => t.type === 'MANUAL_SUBTRACT' && t.operatorName === 'Dieizy')).toBe(true);
+  });
+
+  it('should toggle campaign active status, retrieve stats, and delete safely', async () => {
+    const startsAt = new Date();
+    const endsAt = new Date();
+    endsAt.setDate(endsAt.getDate() + 5);
+
+    const campaign = await createCampaign({
+      name: 'Black Friday Antecipada',
+      description: 'Campanha de teste com cashback 15%',
+      type: 'PERCENTAGE_OVERRIDE',
+      value: 15.0,
+      startsAt,
+      endsAt,
+    });
+
+    // 1. Concede crédito com vínculo à campanha
+    await grantCashback(customerId, 100.0, 'Balcão', campaign.id);
+
+    // 2. Consulta campanhas com estatísticas
+    const all = await getAllCampaigns();
+    const found = all.find((c) => c.id === campaign.id);
+    expect(found).toBeDefined();
+    expect(found?.stats.totalCreditsCount).toBe(1);
+    expect(found?.stats.totalCashbackGranted).toBe(15.0);
+
+    // 3. Pausa a campanha
+    const paused = await toggleCampaignActive(campaign.id, false);
+    expect(paused.isActive).toBe(false);
+
+    // 4. Reativa a campanha
+    const resumed = await toggleCampaignActive(campaign.id, true);
+    expect(resumed.isActive).toBe(true);
+
+    // 5. Exclui a campanha com segurança (mantém o crédito histórico desvinculando com segurança)
+    await deleteCampaign(campaign.id);
+    const afterDelete = await getAllCampaigns();
+    expect(afterDelete.some((c) => c.id === campaign.id)).toBe(false);
+  });
+
+  it('should preserve campaign attribution when counter sale is processed', async () => {
+    const startsAt = new Date();
+    const endsAt = new Date();
+    endsAt.setDate(endsAt.getDate() + 3);
+
+    const campaign = await createCampaign({
+      name: 'Semana VIP Dupla',
+      type: 'MULTIPLIER',
+      value: 2.0,
+      startsAt,
+      endsAt,
+    });
+
+    const saleResult = await processCounterSale({
+      customerId,
+      purchaseAmount: 300.0,
+      redeemAmount: 0,
+      operatorName: 'Balcão Teste',
+      customCashbackPercentage: 2.0, // VIP tier 1.0% x 2
+    });
+
+    expect(saleResult.cashbackEarned).toBe(6.0);
+
+    // Verifica que o crédito salvo possui campaignId atribuído
+    const credit = await prisma.cashbackCredit.findFirst({
+      where: { customerId, campaignId: campaign.id },
+    });
+    expect(credit).toBeDefined();
+    expect(credit?.initialAmount).toBe(6.0);
+    expect(credit?.campaignId).toBe(campaign.id);
   });
 
   afterEach(async () => {

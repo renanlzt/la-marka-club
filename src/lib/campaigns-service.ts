@@ -28,6 +28,11 @@ export async function createCampaign(data: CampaignData) {
     throw new Error('O nome da campanha é obrigatório.');
   }
 
+  const endsAt = new Date(data.endsAt);
+  if (endsAt.getHours() === 0 && endsAt.getMinutes() === 0 && endsAt.getSeconds() === 0) {
+    endsAt.setHours(23, 59, 59, 999);
+  }
+
   return await prisma.campaign.create({
     data: {
       name: cleanName,
@@ -36,9 +41,74 @@ export async function createCampaign(data: CampaignData) {
       value: data.value,
       minPurchase: data.minPurchase || null,
       startsAt: data.startsAt,
-      endsAt: data.endsAt,
+      endsAt,
       isActive: true,
     },
+  });
+}
+
+/**
+ * Lista todas as campanhas com estatísticas de vendas geradas
+ */
+export async function getAllCampaigns() {
+  const campaigns = await prisma.campaign.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      credits: {
+        select: {
+          initialAmount: true,
+          purchaseValue: true,
+        },
+      },
+    },
+  });
+
+  return campaigns.map((camp) => {
+    const totalCreditsCount = camp.credits.length;
+    const totalCashbackGranted = Number(
+      camp.credits.reduce((acc, c) => acc + c.initialAmount, 0).toFixed(2)
+    );
+    const totalSalesVolume = Number(
+      camp.credits.reduce((acc, c) => acc + (c.purchaseValue || 0), 0).toFixed(2)
+    );
+
+    const { credits, ...rest } = camp;
+    return {
+      ...rest,
+      stats: {
+        totalCreditsCount,
+        totalCashbackGranted,
+        totalSalesVolume,
+      },
+    };
+  });
+}
+
+/**
+ * Ativa ou pausa uma campanha existente
+ */
+export async function toggleCampaignActive(id: string, isActive?: boolean) {
+  const current = await prisma.campaign.findUnique({ where: { id } });
+  if (!current) throw new Error('Campanha não encontrada.');
+
+  const nextActive = isActive !== undefined ? isActive : !current.isActive;
+  return await prisma.campaign.update({
+    where: { id },
+    data: { isActive: nextActive },
+  });
+}
+
+/**
+ * Exclui uma campanha desvinculando com segurança os créditos vinculados
+ */
+export async function deleteCampaign(id: string) {
+  await prisma.cashbackCredit.updateMany({
+    where: { campaignId: id },
+    data: { campaignId: null },
+  });
+
+  return await prisma.campaign.delete({
+    where: { id },
   });
 }
 
