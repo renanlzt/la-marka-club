@@ -3,6 +3,7 @@ import { prisma } from '../src/lib/db';
 import { getCustomerWalletByToken } from '../src/lib/customer-service';
 import { grantCashback } from '../src/lib/fifo-engine';
 import { getVipTierInfo } from '../src/components/carteira/VipProgressCard';
+import { getTierTheme, VIP_CARD_THEMES } from '../src/components/carteira/BalanceCard';
 import { nanoid } from 'nanoid';
 
 describe('Customer Digital Wallet Service & Privacy', () => {
@@ -84,5 +85,23 @@ describe('VIP Club Progress and Card Tier Engine', () => {
       maximumFractionDigits: 2,
     });
     expect(formatted).toBe('1.250,50');
+  });
+
+  it('should provide dynamic card themes for each VIP tier', () => {
+    const bronzeTheme = getTierTheme('BRONZE');
+    expect(bronzeTheme.cardGradient).toContain('from-[#4A2616]');
+    expect(bronzeTheme.borderColor).toContain('border-[#CD7F32]');
+
+    const prataTheme = getTierTheme('PRATA');
+    expect(prataTheme.cardGradient).toContain('from-[#334155]');
+    expect(prataTheme.borderColor).toContain('border-slate-300');
+
+    const ouroTheme = getTierTheme('OURO');
+    expect(ouroTheme.cardGradient).toContain('from-[#4E3914]');
+    expect(ouroTheme.borderColor).toContain('border-[#DFB76C]');
+
+    const diamanteTheme = getTierTheme('DIAMANTE');
+    expect(diamanteTheme.cardGradient).toContain('from-[#0F172A]');
+    expect(diamanteTheme.borderColor).toContain('border-cyan-400');
   });
 });
