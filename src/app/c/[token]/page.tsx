@@ -4,6 +4,7 @@ import { getCustomerWalletByToken } from '@/lib/customer-service';
 import { WalletHeader } from '@/components/carteira/WalletHeader';
 import { BalanceCard } from '@/components/carteira/BalanceCard';
 import { VipProgressCard } from '@/components/carteira/VipProgressCard';
+import { WalletPassButton } from '@/components/carteira/WalletPassButton';
 import { TransactionHistory } from '@/components/carteira/TransactionHistory';
 import { Sparkles, Store, MessageCircle } from 'lucide-react';
 
@@ -99,6 +100,15 @@ export default async function CustomerWalletPage({
               {storeSettings.defaultExpirationDays} dias). Basta informar seu telefone no balcão da loja para abater seu saldo direto na sua próxima compra!
             </p>
           </div>
+        </div>
+
+        {/* Salvar na Carteira do Celular (Apple Wallet & Google Wallet) */}
+        <div className="w-full mt-3">
+          <WalletPassButton
+            magicToken={token}
+            customerName={customer.firstName}
+            availableBalance={balanceInfo.availableBalance}
+          />
         </div>
 
         {/* Extrato Transparente no estilo Apple Card / Nubank Ultravioleta */}
