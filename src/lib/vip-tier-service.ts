@@ -1,6 +1,6 @@
 import { prisma } from './db';
 
-export type VipTierType = 'PRATA' | 'OURO' | 'DIAMANTE';
+export type VipTierType = 'BRONZE' | 'PRATA' | 'OURO' | 'DIAMANTE';
 
 export interface VipTierInfo {
   tier: VipTierType;
@@ -12,6 +12,8 @@ export interface VipTierInfo {
 }
 
 export interface VipTierConfig {
+  bronzePercentage: number;
+  silverMinSpent: number;
   silverPercentage: number;
   goldMinSpent: number;
   goldPercentage: number;
@@ -20,28 +22,38 @@ export interface VipTierConfig {
 }
 
 export const DEFAULT_VIP_CONFIG: VipTierConfig = {
+  bronzePercentage: 0.5,
+  silverMinSpent: 300,
   silverPercentage: 1.0,
-  goldMinSpent: 500,
+  goldMinSpent: 800,
   goldPercentage: 1.5,
   diamondMinSpent: 1500,
   diamondPercentage: 2.0,
 };
 
 export const VIP_TIER_CONFIG = {
+  BRONZE: {
+    tier: 'BRONZE' as VipTierType,
+    label: 'Membro Bronze',
+    percentage: 0.5,
+    badgeColor: 'bg-[#7E4825]/15 text-[#633314] border-[#7E4825]/30',
+    minSpent: 0,
+    nextThreshold: 300,
+  },
   PRATA: {
     tier: 'PRATA' as VipTierType,
     label: 'Membro Prata',
     percentage: 1.0,
     badgeColor: 'bg-slate-100 text-slate-800 border-slate-300',
-    minSpent: 0,
-    nextThreshold: 500,
+    minSpent: 300,
+    nextThreshold: 800,
   },
   OURO: {
     tier: 'OURO' as VipTierType,
     label: 'Membro Ouro',
     percentage: 1.5,
     badgeColor: 'bg-amber-100/90 text-amber-900 border-amber-300',
-    minSpent: 500,
+    minSpent: 800,
     nextThreshold: 1500,
   },
   DIAMANTE: {
@@ -56,7 +68,7 @@ export const VIP_TIER_CONFIG = {
 
 /**
  * Carrega a configuração ativa dos Níveis VIP do banco de dados.
- * O nível Prata (base) é automaticamente sincronizado com o defaultCashbackPercentage da loja.
+ * O nível Bronze (base inicial) é sincronizado com defaultCashbackPercentage da loja.
  */
 export async function getActiveVipTierConfig(): Promise<VipTierConfig> {
   const config: VipTierConfig = { ...DEFAULT_VIP_CONFIG };
@@ -68,6 +80,10 @@ export async function getActiveVipTierConfig(): Promise<VipTierConfig> {
 
     if (vipTemplate?.content) {
       const parsed = JSON.parse(vipTemplate.content);
+      if (typeof parsed.bronzePercentage === 'number') config.bronzePercentage = parsed.bronzePercentage;
+      else if (typeof parsed.silverPercentage === 'number') config.bronzePercentage = parsed.silverPercentage;
+
+      if (typeof parsed.silverMinSpent === 'number') config.silverMinSpent = parsed.silverMinSpent;
       if (typeof parsed.silverPercentage === 'number') config.silverPercentage = parsed.silverPercentage;
       if (typeof parsed.goldMinSpent === 'number') config.goldMinSpent = parsed.goldMinSpent;
       if (typeof parsed.goldPercentage === 'number') config.goldPercentage = parsed.goldPercentage;
@@ -88,6 +104,8 @@ export async function getActiveVipTierConfig(): Promise<VipTierConfig> {
 export async function saveActiveVipTierConfig(partial: Partial<VipTierConfig>): Promise<VipTierConfig> {
   const current = await getActiveVipTierConfig();
   const updated: VipTierConfig = {
+    bronzePercentage: typeof partial.bronzePercentage === 'number' ? partial.bronzePercentage : current.bronzePercentage,
+    silverMinSpent: typeof partial.silverMinSpent === 'number' ? partial.silverMinSpent : current.silverMinSpent,
     silverPercentage: typeof partial.silverPercentage === 'number' ? partial.silverPercentage : current.silverPercentage,
     goldMinSpent: typeof partial.goldMinSpent === 'number' ? partial.goldMinSpent : current.goldMinSpent,
     goldPercentage: typeof partial.goldPercentage === 'number' ? partial.goldPercentage : current.goldPercentage,
@@ -95,15 +113,19 @@ export async function saveActiveVipTierConfig(partial: Partial<VipTierConfig>): 
     diamondPercentage: typeof partial.diamondPercentage === 'number' ? partial.diamondPercentage : current.diamondPercentage,
   };
 
-  // Se o percentual do nível Prata foi informado, mantém sincronizado com storeSetting.defaultCashbackPercentage
-  if (typeof partial.silverPercentage === 'number') {
+  // Se o percentual base (Bronze) foi informado, mantém sincronizado com storeSetting.defaultCashbackPercentage
+  const basePercentageToSync = typeof partial.bronzePercentage === 'number' 
+    ? partial.bronzePercentage 
+    : (typeof partial.silverPercentage === 'number' ? partial.silverPercentage : undefined);
+
+  if (typeof basePercentageToSync === 'number') {
     try {
       await prisma.storeSetting.upsert({
         where: { id: 'default' },
-        update: { defaultCashbackPercentage: partial.silverPercentage },
+        update: { defaultCashbackPercentage: basePercentageToSync },
         create: {
           id: 'default',
-          defaultCashbackPercentage: partial.silverPercentage,
+          defaultCashbackPercentage: basePercentageToSync,
         },
       });
     } catch {
@@ -131,13 +153,13 @@ export async function saveActiveVipTierConfig(partial: Partial<VipTierConfig>): 
 
 /**
  * Calcula o nível VIP da cliente com base no total de compras líquidas acumuladas nos últimos 6 meses.
- * Aceita uma configuração customizada opcional para simulações ou regras personalizadas da loja.
+ * Categorias: BRONZE (inicial/base) -> PRATA -> OURO -> DIAMANTE
  */
 export function calculateCustomerVipTier(
   totalSpent6Months: number,
   customConfig?: VipTierConfig
 ): {
-  tier: 'PRATA' | 'OURO' | 'DIAMANTE';
+  tier: VipTierType;
   percentage: number;
   label: string;
   badgeColor: string;
@@ -146,7 +168,9 @@ export function calculateCustomerVipTier(
 } {
   const spent = Math.max(0, typeof totalSpent6Months === 'number' && !isNaN(totalSpent6Months) ? totalSpent6Months : 0);
 
-  const cfg = customConfig ?? {
+  const cfg: VipTierConfig = customConfig ?? {
+    bronzePercentage: VIP_TIER_CONFIG.BRONZE.percentage,
+    silverMinSpent: VIP_TIER_CONFIG.PRATA.minSpent,
     silverPercentage: VIP_TIER_CONFIG.PRATA.percentage,
     goldMinSpent: VIP_TIER_CONFIG.OURO.minSpent,
     goldPercentage: VIP_TIER_CONFIG.OURO.percentage,
@@ -154,6 +178,7 @@ export function calculateCustomerVipTier(
     diamondPercentage: VIP_TIER_CONFIG.DIAMANTE.percentage,
   };
 
+  // 1. Categoria Máxima: DIAMANTE
   if (spent >= cfg.diamondMinSpent) {
     return {
       tier: 'DIAMANTE',
@@ -165,6 +190,7 @@ export function calculateCustomerVipTier(
     };
   }
 
+  // 2. Categoria 3: OURO
   if (spent >= cfg.goldMinSpent) {
     const required = Number(Math.max(0, cfg.diamondMinSpent - spent).toFixed(2));
     return {
@@ -177,12 +203,26 @@ export function calculateCustomerVipTier(
     };
   }
 
-  const required = Number(Math.max(0, cfg.goldMinSpent - spent).toFixed(2));
+  // 3. Categoria 2: PRATA
+  if (spent >= cfg.silverMinSpent) {
+    const required = Number(Math.max(0, cfg.goldMinSpent - spent).toFixed(2));
+    return {
+      tier: 'PRATA',
+      percentage: cfg.silverPercentage,
+      label: VIP_TIER_CONFIG.PRATA.label,
+      badgeColor: VIP_TIER_CONFIG.PRATA.badgeColor,
+      nextTierSpentRequired: required,
+      totalSpent6Months: Number(spent.toFixed(2)),
+    };
+  }
+
+  // 4. Categoria 1 (Inicial / Base): BRONZE
+  const required = Number(Math.max(0, cfg.silverMinSpent - spent).toFixed(2));
   return {
-    tier: 'PRATA',
-    percentage: cfg.silverPercentage,
-    label: VIP_TIER_CONFIG.PRATA.label,
-    badgeColor: VIP_TIER_CONFIG.PRATA.badgeColor,
+    tier: 'BRONZE',
+    percentage: cfg.bronzePercentage,
+    label: VIP_TIER_CONFIG.BRONZE.label,
+    badgeColor: VIP_TIER_CONFIG.BRONZE.badgeColor,
     nextTierSpentRequired: required,
     totalSpent6Months: Number(spent.toFixed(2)),
   };

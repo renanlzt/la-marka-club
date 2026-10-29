@@ -10,50 +10,51 @@ import { grantCashback } from '../src/lib/fifo-engine';
 import { createCampaign } from '../src/lib/campaigns-service';
 import { nanoid } from 'nanoid';
 
-describe('VIP Loyalty Tier Rules & Dynamic Engine', () => {
+describe('VIP Loyalty Tier Rules & Dynamic Engine (Bronze -> Prata -> Ouro -> Diamante)', () => {
   describe('calculateCustomerVipTier (Pure function)', () => {
-    it('should assign PRATA tier for 0 or negative accumulated spend with 1.0% cashback', () => {
+    it('should assign BRONZE tier for 0 or negative accumulated spend with 0.5% cashback as initial category', () => {
       const zeroTier = calculateCustomerVipTier(0);
-      expect(zeroTier.tier).toBe('PRATA');
-      expect(zeroTier.percentage).toBe(1.0);
-      expect(zeroTier.label).toBe('Membro Prata');
-      expect(zeroTier.nextTierSpentRequired).toBe(500.0);
-      expect(zeroTier.badgeColor).toContain('slate');
+      expect(zeroTier.tier).toBe('BRONZE');
+      expect(zeroTier.percentage).toBe(0.5);
+      expect(zeroTier.label).toBe('Membro Bronze');
+      expect(zeroTier.nextTierSpentRequired).toBe(300.0);
+      expect(zeroTier.badgeColor).toContain('#7E4825');
 
       const negTier = calculateCustomerVipTier(-150);
-      expect(negTier.tier).toBe('PRATA');
-      expect(negTier.percentage).toBe(1.0);
-      expect(negTier.nextTierSpentRequired).toBe(500.0);
+      expect(negTier.tier).toBe('BRONZE');
+      expect(negTier.percentage).toBe(0.5);
+      expect(negTier.nextTierSpentRequired).toBe(300.0);
 
       const nanTier = calculateCustomerVipTier(NaN);
-      expect(nanTier.tier).toBe('PRATA');
-      expect(nanTier.percentage).toBe(1.0);
+      expect(nanTier.tier).toBe('BRONZE');
+      expect(nanTier.percentage).toBe(0.5);
     });
 
-    it('should assign PRATA tier for spend under R$ 500 with correct progress to OURO', () => {
-      const tier250 = calculateCustomerVipTier(250.0);
-      expect(tier250.tier).toBe('PRATA');
-      expect(tier250.percentage).toBe(1.0);
-      expect(tier250.nextTierSpentRequired).toBe(250.0);
+    it('should assign PRATA tier for spend between R$ 300 and R$ 800 with 1.0% cashback', () => {
+      const tier300 = calculateCustomerVipTier(300.0);
+      expect(tier300.tier).toBe('PRATA');
+      expect(tier300.percentage).toBe(1.0);
+      expect(tier300.label).toBe('Membro Prata');
+      expect(tier300.nextTierSpentRequired).toBe(500.0);
 
-      const tier499 = calculateCustomerVipTier(499.99);
-      expect(tier499.tier).toBe('PRATA');
-      expect(tier499.percentage).toBe(1.0);
-      expect(tier499.nextTierSpentRequired).toBe(0.01);
+      const tier799 = calculateCustomerVipTier(799.99);
+      expect(tier799.tier).toBe('PRATA');
+      expect(tier799.percentage).toBe(1.0);
+      expect(tier799.nextTierSpentRequired).toBe(0.01);
     });
 
-    it('should assign OURO tier at exactly R$ 500 up to R$ 1.500 with 1.5% cashback', () => {
-      const tier500 = calculateCustomerVipTier(500.0);
-      expect(tier500.tier).toBe('OURO');
-      expect(tier500.percentage).toBe(1.5);
-      expect(tier500.label).toBe('Membro Ouro');
-      expect(tier500.nextTierSpentRequired).toBe(1000.0);
-      expect(tier500.badgeColor).toContain('amber');
+    it('should assign OURO tier at exactly R$ 800 up to R$ 1.500 with 1.5% cashback', () => {
+      const tier800 = calculateCustomerVipTier(800.0);
+      expect(tier800.tier).toBe('OURO');
+      expect(tier800.percentage).toBe(1.5);
+      expect(tier800.label).toBe('Membro Ouro');
+      expect(tier800.nextTierSpentRequired).toBe(700.0);
+      expect(tier800.badgeColor).toContain('amber');
 
-      const tier1000 = calculateCustomerVipTier(1000.0);
-      expect(tier1000.tier).toBe('OURO');
-      expect(tier1000.percentage).toBe(1.5);
-      expect(tier1000.nextTierSpentRequired).toBe(500.0);
+      const tier1200 = calculateCustomerVipTier(1200.0);
+      expect(tier1200.tier).toBe('OURO');
+      expect(tier1200.percentage).toBe(1.5);
+      expect(tier1200.nextTierSpentRequired).toBe(300.0);
 
       const tier1499 = calculateCustomerVipTier(1499.99);
       expect(tier1499.tier).toBe('OURO');
@@ -92,23 +93,32 @@ describe('VIP Loyalty Tier Rules & Dynamic Engine', () => {
       customerId = customer.id;
     });
 
-    it('should return PRATA tier for customer without prior purchases', async () => {
+    it('should return BRONZE tier for customer without prior purchases', async () => {
       const vip = await getCustomerVipTier(customerId);
-      expect(vip.tier).toBe('PRATA');
-      expect(vip.percentage).toBe(1.0);
-      expect(vip.nextTierSpentRequired).toBe(500.0);
+      expect(vip.tier).toBe('BRONZE');
+      expect(vip.percentage).toBe(0.5);
+      expect(vip.nextTierSpentRequired).toBe(300.0);
       expect(vip.totalSpent6Months).toBe(0);
     });
 
-    it('should return OURO tier when purchases in last 6 months reach R$ 600', async () => {
-      // 1. Concede crédito originado de compra de R$ 600
-      await grantCashback(customerId, 600.0, 'Balcão Teste');
+    it('should return PRATA tier when purchases in last 6 months reach R$ 350', async () => {
+      await grantCashback(customerId, 350.0, 'Balcão Teste');
+
+      const vip = await getCustomerVipTier(customerId);
+      expect(vip.tier).toBe('PRATA');
+      expect(vip.percentage).toBe(1.0);
+      expect(vip.nextTierSpentRequired).toBe(450.0); // 800 - 350
+      expect(vip.totalSpent6Months).toBe(350.0);
+    });
+
+    it('should return OURO tier when purchases in last 6 months reach R$ 900', async () => {
+      await grantCashback(customerId, 900.0, 'Balcão Teste');
 
       const vip = await getCustomerVipTier(customerId);
       expect(vip.tier).toBe('OURO');
       expect(vip.percentage).toBe(1.5);
-      expect(vip.nextTierSpentRequired).toBe(900.0);
-      expect(vip.totalSpent6Months).toBe(600.0);
+      expect(vip.nextTierSpentRequired).toBe(600.0); // 1500 - 900
+      expect(vip.totalSpent6Months).toBe(900.0);
     });
 
     it('should return DIAMANTE tier when purchases in last 6 months exceed R$ 1.500', async () => {
@@ -143,16 +153,16 @@ describe('VIP Loyalty Tier Rules & Dynamic Engine', () => {
         },
       });
 
-      // Cliente sem compras recentes deve permanecer PRATA
+      // Cliente sem compras recentes deve permanecer BRONZE (categoria inicial)
       const vipBefore = await getCustomerVipTier(customerId);
-      expect(vipBefore.tier).toBe('PRATA');
+      expect(vipBefore.tier).toBe('BRONZE');
       expect(vipBefore.totalSpent6Months).toBe(0);
 
-      // Nova compra recente de R$ 600 dentro da janela de 6 meses
-      await grantCashback(customerId, 600.0, 'Balcão Atual');
+      // Nova compra recente de R$ 900 dentro da janela de 6 meses leva a OURO
+      await grantCashback(customerId, 900.0, 'Balcão Atual');
       const vipAfter = await getCustomerVipTier(customerId);
       expect(vipAfter.tier).toBe('OURO');
-      expect(vipAfter.totalSpent6Months).toBe(600.0);
+      expect(vipAfter.totalSpent6Months).toBe(900.0);
     });
   });
 
@@ -176,15 +186,34 @@ describe('VIP Loyalty Tier Rules & Dynamic Engine', () => {
       await prisma.campaign.deleteMany();
     });
 
-    it('should include customer vipTier in searchCustomerForCounter', async () => {
+    it('should include customer vipTier in searchCustomerForCounter with initial BRONZE tier', async () => {
       const summary = await searchCustomerForCounter(customerPhone);
       expect(summary).not.toBeNull();
       expect(summary?.vipTier).toBeDefined();
-      expect(summary?.vipTier?.tier).toBe('PRATA');
-      expect(summary?.vipTier?.percentage).toBe(1.0);
+      expect(summary?.vipTier?.tier).toBe('BRONZE');
+      expect(summary?.vipTier?.percentage).toBe(0.5);
+    });
+
+    it('should grant 0.5% cashback for initial BRONZE customer in processCounterSale', async () => {
+      const sale = await processCounterSale({
+        customerId,
+        purchaseAmount: 200.0,
+        redeemAmount: 0,
+        operatorName: 'Caixa VIP',
+        applyVipTier: true,
+      });
+
+      // 0.5% de 200.00 = R$ 1.00
+      expect(sale.cashbackEarned).toBe(1.0);
+      expect(sale.netAmountToPay).toBe(200.0);
+      expect(sale.newBalance).toBe(1.0);
+      expect(sale.vipTier?.tier).toBe('BRONZE');
     });
 
     it('should grant 1.0% cashback for PRATA customer in processCounterSale', async () => {
+      // Cliente acumula R$ 400 em compras (PRATA)
+      await grantCashback(customerId, 400.0, 'Compra anterior');
+
       const sale = await processCounterSale({
         customerId,
         purchaseAmount: 300.0,
@@ -196,13 +225,12 @@ describe('VIP Loyalty Tier Rules & Dynamic Engine', () => {
       // 1.0% de 300.00 = R$ 3.00
       expect(sale.cashbackEarned).toBe(3.0);
       expect(sale.netAmountToPay).toBe(300.0);
-      expect(sale.newBalance).toBe(3.0);
       expect(sale.vipTier?.tier).toBe('PRATA');
     });
 
     it('should grant 1.5% cashback for OURO customer in processCounterSale', async () => {
-      // Cliente já acumula R$ 700 em compras
-      await grantCashback(customerId, 700.0, 'Compra anterior');
+      // Cliente já acumula R$ 900 em compras
+      await grantCashback(customerId, 900.0, 'Compra anterior');
 
       const sale = await processCounterSale({
         customerId,
@@ -216,7 +244,7 @@ describe('VIP Loyalty Tier Rules & Dynamic Engine', () => {
       expect(sale.cashbackEarned).toBe(6.0);
       expect(sale.netAmountToPay).toBe(400.0);
       expect(sale.vipTier?.tier).toBe('OURO');
-      expect(sale.vipTier?.totalSpent6Months).toBe(1100.0);
+      expect(sale.vipTier?.totalSpent6Months).toBe(1300.0);
     });
 
     it('should grant 2.0% cashback for DIAMANTE customer in processCounterSale', async () => {
@@ -237,27 +265,27 @@ describe('VIP Loyalty Tier Rules & Dynamic Engine', () => {
       expect(sale.vipTier?.nextTierSpentRequired).toBeNull();
     });
 
-    it('should upgrade customer tier from PRATA to OURO after crossing threshold', async () => {
-      // Cliente tinha R$ 400 de compras (PRATA)
-      await grantCashback(customerId, 400.0, 'Compra inicial');
+    it('should upgrade customer tier from BRONZE to PRATA after crossing threshold', async () => {
+      // Cliente tinha R$ 150 de compras (BRONZE)
+      await grantCashback(customerId, 150.0, 'Compra inicial');
 
       const initialVip = await getCustomerVipTier(customerId);
-      expect(initialVip.tier).toBe('PRATA');
+      expect(initialVip.tier).toBe('BRONZE');
 
-      // Nova compra de R$ 300 (leva a R$ 700 acumulados)
-      // Ganha 1.0% sobre os R$ 300 (= R$ 3.00), e passa a ser OURO
+      // Nova compra de R$ 200 (leva a R$ 350 acumulados)
+      // Ganha 0.5% sobre os R$ 200 (= R$ 1.00), e passa a ser PRATA
       const sale = await processCounterSale({
         customerId,
-        purchaseAmount: 300.0,
+        purchaseAmount: 200.0,
         redeemAmount: 0,
         operatorName: 'Caixa VIP',
         applyVipTier: true,
       });
 
-      expect(sale.cashbackEarned).toBe(3.0);
-      expect(sale.vipTier?.tier).toBe('OURO');
-      expect(sale.vipTier?.totalSpent6Months).toBe(700.0);
-      expect(sale.vipTier?.nextTierSpentRequired).toBe(800.0);
+      expect(sale.cashbackEarned).toBe(1.0);
+      expect(sale.vipTier?.tier).toBe('PRATA');
+      expect(sale.vipTier?.totalSpent6Months).toBe(350.0);
+      expect(sale.vipTier?.nextTierSpentRequired).toBe(450.0);
     });
 
     it('should respect active promotional campaign multiplier over VIP percentage', async () => {
@@ -291,7 +319,7 @@ describe('VIP Loyalty Tier Rules & Dynamic Engine', () => {
     });
 
     it('should respect PERCENTAGE_OVERRIDE campaign overriding VIP tier', async () => {
-      // Cliente PRATA (1.0%)
+      // Cliente BRONZE (0.5%)
       const now = new Date();
       const startsAt = new Date(now.getTime() - 3600000);
       const endsAt = new Date(now.getTime() + 86400000 * 7);

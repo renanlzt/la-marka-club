@@ -10,6 +10,12 @@ describe('Customer Digital Wallet Service & Privacy', () => {
   let customerId: string;
 
   beforeEach(async () => {
+    await prisma.storeSetting.upsert({
+      where: { id: 'default' },
+      update: { defaultCashbackPercentage: 5.0, defaultExpirationDays: 45 },
+      create: { id: 'default', defaultCashbackPercentage: 5.0, defaultExpirationDays: 45 },
+    });
+
     magicToken = `tk_${nanoid(20)}`;
     const randomPhone = `1198${Math.floor(1000000 + Math.random() * 9000000)}`;
     const customer = await prisma.customer.create({

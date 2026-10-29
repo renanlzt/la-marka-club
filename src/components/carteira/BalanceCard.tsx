@@ -6,9 +6,18 @@ import { CustomerBalanceInfo } from '@/lib/fifo-engine';
 interface BalanceCardProps {
   balanceInfo: CustomerBalanceInfo;
   customerName?: string;
+  vipTier?: {
+    tier: string;
+    label: string;
+    percentage: number;
+    badgeColor?: string;
+  };
 }
 
-export function BalanceCard({ balanceInfo, customerName }: BalanceCardProps) {
+export function BalanceCard({ balanceInfo, customerName, vipTier }: BalanceCardProps) {
+  const tierName = vipTier?.tier || 'BRONZE';
+  const tierPercentage = vipTier?.percentage ?? 0.5;
+
   return (
     <div className="w-full flex flex-col gap-3">
       {/* Luxury VIP Membership Matte Card */}
@@ -20,20 +29,19 @@ export function BalanceCard({ balanceInfo, customerName }: BalanceCardProps) {
         <div className="absolute -right-12 -top-12 w-48 h-48 bg-[#DFB76C]/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-10 -bottom-10 w-44 h-44 bg-[#C59B94]/10 rounded-full blur-2xl pointer-events-none" />
 
-        {/* Selos em marca d'água concêntricos de alta joalheria/boutique */}
+        {/* Selos em marca d'água concêntricos de boutique */}
         <div className="absolute right-0 bottom-0 w-36 h-36 border border-[#DFB76C]/10 rounded-full -mr-10 -mb-10 pointer-events-none" />
         <div className="absolute right-0 bottom-0 w-56 h-56 border border-[#DFB76C]/5 rounded-full -mr-18 -mb-18 pointer-events-none" />
 
         {/* Efeito de brilho metálico suave (shimmer) */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#DFB76C]/10 via-white/[0.07] to-transparent -translate-x-full animate-shimmer pointer-events-none" />
 
-        {/* Card Header: Marca gravada em baixo-relevo visual e Identificador VIP */}
-        <div className="flex items-center justify-between mb-6 relative z-10">
+        {/* Card Header: Marca gravada em baixo-relevo visual e Categoria VIP */}
+        <div className="flex items-center justify-between mb-5 relative z-10">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-[#DFB76C]/20 border border-[#DFB76C]/40 flex items-center justify-center shadow-xs">
               <Crown className="w-3.5 h-3.5 text-[#DFB76C]" strokeWidth={1.5} />
             </div>
-            {/* Efeito estilizado em baixo-relevo visual */}
             <span
               className="font-serif tracking-[0.25em] text-xs sm:text-sm font-semibold uppercase text-[#FAF6F5]/90 select-none"
               style={{
@@ -44,10 +52,10 @@ export function BalanceCard({ balanceInfo, customerName }: BalanceCardProps) {
             </span>
           </div>
 
-          {/* Identificador visual elegante de cliente */}
+          {/* Identificador visual elegante da categoria atual */}
           <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full bg-[#DFB76C]/20 text-[#DFB76C] border border-[#DFB76C]/40 backdrop-blur-xs shadow-xs">
             <Sparkles className="w-3 h-3 text-[#DFB76C]" />
-            MEMBRO PRIVILÈGE • VIP
+            MEMBRO {tierName} • {tierPercentage}%
           </span>
         </div>
 
@@ -60,7 +68,7 @@ export function BalanceCard({ balanceInfo, customerName }: BalanceCardProps) {
           </div>
         </div>
 
-        {/* Card Body: Saldo Disponível com tipografia font-serif bem destacada */}
+        {/* Card Body: Saldo Disponível */}
         <div className="relative z-10 mt-1 mb-2">
           <span className="text-[11px] font-medium tracking-[0.18em] uppercase text-[#EADBD7]/80 block mb-1">
             Saldo Disponível em Carteira

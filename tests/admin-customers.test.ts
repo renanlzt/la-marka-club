@@ -19,6 +19,12 @@ describe('Admin Customers Management', () => {
   let testPhone: string;
 
   beforeEach(async () => {
+    await prisma.storeSetting.upsert({
+      where: { id: 'default' },
+      update: { defaultCashbackPercentage: 5.0 },
+      create: { id: 'default', defaultCashbackPercentage: 5.0 },
+    });
+
     testPhone = `1199${Math.floor(1000000 + Math.random() * 9000000)}`;
     const cust = await prisma.customer.create({
       data: {

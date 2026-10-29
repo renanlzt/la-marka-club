@@ -9,6 +9,12 @@ describe('Counter / Point of Sale Flow', () => {
   let customerId: string;
 
   beforeEach(async () => {
+    await prisma.storeSetting.upsert({
+      where: { id: 'default' },
+      update: { defaultCashbackPercentage: 5.0 },
+      create: { id: 'default', defaultCashbackPercentage: 5.0 },
+    });
+
     customerPhone = `1197${Math.floor(1000000 + Math.random() * 9000000)}`;
     const customer = await prisma.customer.create({
       data: {

@@ -1,6 +1,8 @@
 import { prisma } from './db';
 import { DEFAULT_TEMPLATES } from './whatsapp';
 import { CustomerBalanceInfo } from './fifo-engine';
+import { getActiveCampaign } from './campaigns-service';
+import { getActiveVipTierConfig } from './vip-tier-service';
 
 export interface DashboardStats {
   totalCustomers: number;
@@ -13,6 +15,20 @@ export interface DashboardStats {
   customersWithRepeatPurchase: number;
   totalPurchasingCustomers: number;
   upcomingBirthdaysCount: number;
+  expiringIn15DaysCount: number;
+  activeCampaign?: {
+    id: string;
+    name: string;
+    type: string;
+    value: number;
+    endsAt: Date;
+  } | null;
+  vipCounts: {
+    bronze: number;
+    prata: number;
+    ouro: number;
+    diamante: number;
+  };
 }
 
 /**
@@ -93,6 +109,72 @@ export async function getAdminDashboardStats(): Promise<DashboardStats> {
     where: { birthMonth: currentMonth },
   });
 
+  // Clientes com cashback próximo do vencimento (próximos 15 dias)
+  const in15Days = new Date();
+  in15Days.setDate(in15Days.getDate() + 15);
+  const expiringLots = await prisma.cashbackCredit.findMany({
+    where: {
+      status: 'ACTIVE',
+      currentBalance: { gt: 0 },
+      expiresAt: {
+        gte: new Date(),
+        lte: in15Days,
+      },
+    },
+    select: { customerId: true },
+  });
+  const expiringIn15DaysCount = new Set(expiringLots.map((l) => l.customerId)).size;
+
+  // Campanha ativa no momento
+  const rawActiveCampaign = await getActiveCampaign();
+  const activeCampaign = rawActiveCampaign
+    ? {
+        id: rawActiveCampaign.id,
+        name: rawActiveCampaign.name,
+        type: rawActiveCampaign.type,
+        value: rawActiveCampaign.value,
+        endsAt: rawActiveCampaign.endsAt,
+      }
+    : null;
+
+  // Distribuição da base de clientes pelas 4 categorias VIP
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+  const recentPurchases = await prisma.cashbackCredit.groupBy({
+    by: ['customerId'],
+    where: {
+      origin: 'PURCHASE',
+      createdAt: { gte: sixMonthsAgo },
+      purchaseValue: { not: null },
+    },
+    _sum: {
+      purchaseValue: true,
+    },
+  });
+
+  const vipConfig = await getActiveVipTierConfig();
+  const vipCounts = {
+    bronze: totalCustomers,
+    prata: 0,
+    ouro: 0,
+    diamante: 0,
+  };
+
+  for (const item of recentPurchases) {
+    const spent = item._sum.purchaseValue ?? 0;
+    if (spent >= vipConfig.diamondMinSpent) {
+      vipCounts.diamante++;
+      vipCounts.bronze = Math.max(0, vipCounts.bronze - 1);
+    } else if (spent >= vipConfig.goldMinSpent) {
+      vipCounts.ouro++;
+      vipCounts.bronze = Math.max(0, vipCounts.bronze - 1);
+    } else if (spent >= vipConfig.silverMinSpent) {
+      vipCounts.prata++;
+      vipCounts.bronze = Math.max(0, vipCounts.bronze - 1);
+    }
+  }
+
   return {
     totalCustomers,
     totalSalesVolume,
@@ -104,6 +186,9 @@ export async function getAdminDashboardStats(): Promise<DashboardStats> {
     customersWithRepeatPurchase,
     totalPurchasingCustomers,
     upcomingBirthdaysCount,
+    expiringIn15DaysCount,
+    activeCampaign,
+    vipCounts,
   };
 }
 

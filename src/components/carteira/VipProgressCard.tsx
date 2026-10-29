@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crown, Sparkles, Award, ChevronRight } from 'lucide-react';
+import { Crown, Sparkles, ChevronRight } from 'lucide-react';
 
 export interface VipProgressCardProps {
   availableBalance: number;
@@ -18,11 +18,11 @@ export function getVipTierInfo(accumulated: number) {
   if (accumulated >= 300) {
     return {
       currentTier: 'Diamante',
-      nextTier: 'VIP Étoile',
+      nextTier: 'Categoria Máxima',
       progressPercentage: 100,
       remaining: 0,
       isMaxTier: true,
-      badgeColor: 'bg-[#DFB76C]/25 text-[#9A7328] border-[#DFB76C]/50',
+      badgeColor: 'bg-purple-100/90 text-purple-900 border-purple-300',
     };
   }
 
@@ -34,18 +34,30 @@ export function getVipTierInfo(accumulated: number) {
       progressPercentage: tierProgress,
       remaining: Math.max(0, 300 - accumulated),
       isMaxTier: false,
-      badgeColor: 'bg-[#DFB76C]/20 text-[#8C6219] border-[#DFB76C]/40',
+      badgeColor: 'bg-amber-100/90 text-amber-900 border-amber-300',
     };
   }
 
-  const tierProgress = Math.min(100, Math.max(8, Math.round((accumulated / 100) * 100)));
+  if (accumulated >= 40) {
+    const tierProgress = Math.min(100, Math.max(8, Math.round((accumulated / 100) * 100)));
+    return {
+      currentTier: 'Prata',
+      nextTier: 'Ouro',
+      progressPercentage: tierProgress,
+      remaining: Math.max(0, 100 - accumulated),
+      isMaxTier: false,
+      badgeColor: 'bg-slate-100 text-slate-800 border-slate-300',
+    };
+  }
+
+  const tierProgress = Math.min(100, Math.max(8, Math.round((accumulated / 40) * 100)));
   return {
-    currentTier: 'Prata',
-    nextTier: 'Ouro',
+    currentTier: 'Bronze',
+    nextTier: 'Prata',
     progressPercentage: tierProgress,
-    remaining: Math.max(0, 100 - accumulated),
+    remaining: Math.max(0, 40 - accumulated),
     isMaxTier: false,
-    badgeColor: 'bg-lamarka-200/60 text-lamarka-800 border-lamarka-300',
+    badgeColor: 'bg-[#7E4825]/15 text-[#633314] border-[#7E4825]/30',
   };
 }
 
@@ -56,14 +68,14 @@ export function VipProgressCard({
 }: VipProgressCardProps) {
   const effectiveAccumulated = Math.max(availableBalance, totalAccumulated ?? 0);
 
-  // Se o objeto oficial do motor VIP for fornecido, utiliza os dados reais
-  let currentTier = 'Prata';
-  let nextTier = 'Ouro';
+  // Mapeamento dinâmico dos 4 níveis
+  let currentTier = 'Bronze';
+  let nextTier = 'Prata';
   let isMaxTier = false;
-  let progressPercentage = 50;
-  let remaining = 0;
-  let badgeColor = 'bg-lamarka-200/60 text-lamarka-800 border-lamarka-300';
-  let percentage = 1.0;
+  let progressPercentage = 25;
+  let remaining = 300;
+  let badgeColor = 'bg-[#7E4825]/15 text-[#633314] border-[#7E4825]/30';
+  let percentage = 0.5;
 
   if (vipTier) {
     percentage = vipTier.percentage;
@@ -82,11 +94,18 @@ export function VipProgressCard({
       remaining = vipTier.nextTierSpentRequired ?? 0;
       const spent = vipTier.totalSpent6Months;
       progressPercentage = Math.min(100, Math.max(10, Math.round((spent / (spent + remaining || 1)) * 100)));
-    } else {
+    } else if (vipTier.tier === 'PRATA') {
       currentTier = 'Prata';
       nextTier = 'Ouro';
       isMaxTier = false;
-      remaining = vipTier.nextTierSpentRequired ?? 500;
+      remaining = vipTier.nextTierSpentRequired ?? 0;
+      const spent = vipTier.totalSpent6Months;
+      progressPercentage = Math.min(100, Math.max(10, Math.round((spent / (spent + remaining || 1)) * 100)));
+    } else {
+      currentTier = 'Bronze';
+      nextTier = 'Prata';
+      isMaxTier = false;
+      remaining = vipTier.nextTierSpentRequired ?? 300;
       const spent = vipTier.totalSpent6Months;
       progressPercentage = Math.min(100, Math.max(8, Math.round((spent / (spent + remaining || 1)) * 100)));
     }
@@ -123,7 +142,7 @@ export function VipProgressCard({
               Programa de Fidelidade
             </span>
             <h3 className="text-sm font-serif font-semibold text-lamarka-900 leading-tight">
-              Status La Marka Privilège
+              La Marka Privilège
             </h3>
           </div>
         </div>
@@ -131,22 +150,15 @@ export function VipProgressCard({
         <span
           className={`inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full border shadow-2xs ${badgeColor}`}
         >
-          <Sparkles className="w-3 h-3 text-[#DFB76C]" />
-          Nível {currentTier} ({percentage}%)
+          <Sparkles className="w-3 h-3" />
+          {currentTier} ({percentage}%)
         </span>
-      </div>
-
-      {/* Mensagem Acolhedora de Progresso */}
-      <div className="bg-[#FAF6F5] rounded-2xl p-3.5 border border-lamarka-200/70 mb-4">
-        <p className="text-xs text-lamarka-800 font-light leading-relaxed">
-          Você já acumulou <strong className="font-semibold text-lamarka-900">R$ {formattedAccumulated}</strong> de cashback! {isMaxTier ? 'Você já desfruta dos maiores benefícios e cashback da loja.' : `Continue comprando para alcançar o nível ${nextTier} e turbinar seu retorno.`}
-        </p>
       </div>
 
       {/* Indicadores de Nível: Nível Atual -> Próximo Nível */}
       <div className="flex items-center justify-between text-xs mb-2">
         <div className="flex items-center gap-1.5">
-          <span className="text-lamarka-500 font-light">Nível Atual:</span>
+          <span className="text-lamarka-500 font-light">Nível:</span>
           <span className="font-semibold text-lamarka-900 font-serif text-sm">
             {currentTier}
           </span>
@@ -168,12 +180,11 @@ export function VipProgressCard({
       </div>
 
       {/* Barra de Progresso Dourada / Champagne */}
-      <div className="w-full h-3 rounded-full bg-lamarka-100/90 p-0.5 border border-[#DFB76C]/25 overflow-hidden shadow-inner relative">
+      <div className="w-full h-2.5 rounded-full bg-lamarka-100/90 p-0.5 border border-[#DFB76C]/25 overflow-hidden shadow-inner relative">
         <div
           className="h-full rounded-full bg-gradient-to-r from-[#DFB76C] via-[#EDD293] to-[#C59B94] transition-all duration-700 shadow-glow-gold relative overflow-hidden"
           style={{ width: `${progressPercentage}%` }}
         >
-          {/* Efeito sutil de luz na barra */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer" />
         </div>
       </div>
@@ -183,9 +194,13 @@ export function VipProgressCard({
         <span className="text-[10px] tracking-wide text-lamarka-500 font-light">
           {progressPercentage}% da jornada
         </span>
-        {!isMaxTier && (
+        {!isMaxTier ? (
           <span className="text-[10px] tracking-wide text-lamarka-600 font-medium">
             Faltam R$ {formattedRemaining} em compras para {nextTier}
+          </span>
+        ) : (
+          <span className="text-[10px] tracking-wide text-emerald-700 font-medium">
+            Maior cashback da loja ativo
           </span>
         )}
       </div>
