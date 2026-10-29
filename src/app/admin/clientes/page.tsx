@@ -22,8 +22,16 @@ import {
   Pencil,
   X,
   Eye,
+  Gift,
+  Crown,
 } from 'lucide-react';
 import CustomerDrawer, { SellerInfo } from '@/components/admin/CustomerDrawer';
+
+export type SmartSegmentType =
+  | 'INACTIVE_45D'
+  | 'EXPIRING_15D'
+  | 'BIRTHDAYS_WEEK'
+  | 'TOP_TIER';
 
 interface CustomerSummary {
   id: string;
@@ -46,6 +54,15 @@ interface CustomerSummary {
     totalEarned: number;
     totalRedeemed: number;
     totalPurchases: number;
+    lastPurchaseDate?: string | null;
+  };
+  segmentContext?: {
+    daysInactive?: number;
+    daysUntilExpiration?: number | null;
+    isBirthdayWeek?: boolean;
+    tier?: string;
+    suggestedWhatsAppMessage?: string;
+    whatsAppUrl?: string;
   };
 }
 
@@ -54,6 +71,15 @@ export default function AdminClientesPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'WITH_BALANCE' | 'EXPIRING' | 'BIRTHDAYS'>('ALL');
+  const [activeSegment, setActiveSegment] = useState<SmartSegmentType | null>(null);
+  const [segmentCounts, setSegmentCounts] = useState({
+    INACTIVE_45D: 0,
+    EXPIRING_15D: 0,
+    BIRTHDAYS_WEEK: 0,
+    TOP_TIER: 0,
+  });
+  const [segmentCustomersMap, setSegmentCustomersMap] = useState<Partial<Record<SmartSegmentType, CustomerSummary[]>>>({});
+  const [loadingSegment, setLoadingSegment] = useState(false);
   const [sortBy, setSortBy] = useState<'RECENT' | 'BALANCE_DESC' | 'NAME_ASC' | 'PURCHASES_DESC'>('RECENT');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
@@ -75,6 +101,40 @@ export default function AdminClientesPage() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
+  const fetchSegmentCounts = async () => {
+    try {
+      const res = await fetch('/api/admin/clientes/segmentos');
+      const data = await res.json();
+      if (data.counts) {
+        setSegmentCounts(data.counts);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar contagens de segmentos:', err);
+    }
+  };
+
+  const fetchSegmentCustomers = async (type: SmartSegmentType) => {
+    if (segmentCustomersMap[type]) return;
+    setLoadingSegment(true);
+    try {
+      const res = await fetch(`/api/admin/clientes/segmentos?type=${type}`);
+      const data = await res.json();
+      if (data.customers) {
+        setSegmentCustomersMap((prev) => ({
+          ...prev,
+          [type]: data.customers,
+        }));
+      }
+      if (data.counts) {
+        setSegmentCounts(data.counts);
+      }
+    } catch (err) {
+      console.error(`Erro ao carregar clientes do segmento ${type}:`, err);
+    } finally {
+      setLoadingSegment(false);
+    }
+  };
+
   const fetchCustomers = async (query = '') => {
     setLoading(true);
     try {
@@ -86,6 +146,7 @@ export default function AdminClientesPage() {
       if (data.customers) {
         setCustomers(data.customers);
       }
+      fetchSegmentCounts();
     } catch (err) {
       console.error('Erro ao buscar clientes:', err);
     } finally {
@@ -111,9 +172,60 @@ export default function AdminClientesPage() {
       .catch((err) => {
         console.error('Erro ao buscar vendedoras para a visão 360º:', err);
       });
+    fetchSegmentCounts();
   }, []);
 
   const currentMonth = useMemo(() => new Date().getMonth() + 1, []);
+  const today = useMemo(() => new Date(), []);
+
+  // Regras de detecção em memória para clientes
+  const isInactive = (c: CustomerSummary) => {
+    if (c.segmentContext?.daysInactive !== undefined) {
+      return c.segmentContext.daysInactive >= 45;
+    }
+    const lastPurchase = c.stats?.lastPurchaseDate ? new Date(c.stats.lastPurchaseDate) : null;
+    const baseDate = lastPurchase || new Date(c.createdAt);
+    const diffDays = Math.floor((today.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays >= 45;
+  };
+
+  const isExpiring = (c: CustomerSummary) => {
+    return (
+      (c.balanceInfo?.availableBalance || 0) > 0 &&
+      c.balanceInfo?.expiringInDays !== null &&
+      c.balanceInfo?.expiringInDays !== undefined &&
+      c.balanceInfo.expiringInDays <= 15
+    );
+  };
+
+  const isBirthdayWeek = (c: CustomerSummary) => {
+    if (c.segmentContext?.isBirthdayWeek !== undefined) {
+      return c.segmentContext.isBirthdayWeek;
+    }
+    if (!c.birthDay || !c.birthMonth) return false;
+    for (let i = 0; i <= 7; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      if (d.getMonth() + 1 === c.birthMonth && d.getDate() === c.birthDay) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const isTopTier = (c: CustomerSummary) => {
+    return (c.stats?.totalPurchases || 0) >= 2 || (c.stats?.totalEarned || 0) >= 100;
+  };
+
+  const handleToggleSegment = (seg: SmartSegmentType) => {
+    if (activeSegment === seg) {
+      setActiveSegment(null);
+    } else {
+      setActiveSegment(seg);
+      setActiveFilter('ALL');
+      fetchSegmentCustomers(seg);
+    }
+  };
 
   // Métricas agregadas
   const metrics = useMemo(() => {
@@ -136,14 +248,42 @@ export default function AdminClientesPage() {
   const filteredCustomers = useMemo(() => {
     let result = [...customers];
 
-    if (activeFilter === 'WITH_BALANCE') {
-      result = result.filter((c) => c.balanceInfo.availableBalance > 0);
-    } else if (activeFilter === 'EXPIRING') {
-      result = result.filter(
-        (c) => c.balanceInfo.expiringInDays !== null && c.balanceInfo.expiringInDays <= 15
-      );
-    } else if (activeFilter === 'BIRTHDAYS') {
-      result = result.filter((c) => c.birthMonth === currentMonth);
+    if (activeSegment) {
+      if (segmentCustomersMap[activeSegment]) {
+        result = [...segmentCustomersMap[activeSegment]!];
+      } else {
+        if (activeSegment === 'INACTIVE_45D') {
+          result = result.filter(isInactive);
+        } else if (activeSegment === 'EXPIRING_15D') {
+          result = result.filter(isExpiring);
+        } else if (activeSegment === 'BIRTHDAYS_WEEK') {
+          result = result.filter(isBirthdayWeek);
+        } else if (activeSegment === 'TOP_TIER') {
+          result = result.filter(isTopTier);
+        }
+      }
+    } else {
+      if (activeFilter === 'WITH_BALANCE') {
+        result = result.filter((c) => c.balanceInfo.availableBalance > 0);
+      } else if (activeFilter === 'EXPIRING') {
+        result = result.filter(
+          (c) => c.balanceInfo.expiringInDays !== null && c.balanceInfo.expiringInDays <= 15
+        );
+      } else if (activeFilter === 'BIRTHDAYS') {
+        result = result.filter((c) => c.birthMonth === currentMonth);
+      }
+    }
+
+    // Filtro de busca textual caso esteja ativo
+    if (searchQuery.trim() && activeSegment) {
+      const q = searchQuery.toLowerCase().trim();
+      const digits = q.replace(/\D/g, '');
+      result = result.filter((c) => {
+        const nameMatch = c.name.toLowerCase().includes(q);
+        const phoneMatch = digits.length >= 3 && c.phone.includes(digits);
+        const cpfMatch = c.cpf && digits.length >= 3 && c.cpf.includes(digits);
+        return nameMatch || phoneMatch || cpfMatch;
+      });
     }
 
     result.sort((a, b) => {
@@ -160,7 +300,16 @@ export default function AdminClientesPage() {
     });
 
     return result;
-  }, [customers, activeFilter, sortBy, currentMonth]);
+  }, [
+    customers,
+    activeSegment,
+    segmentCustomersMap,
+    activeFilter,
+    searchQuery,
+    sortBy,
+    currentMonth,
+    today,
+  ]);
 
   const formatBRL = (val: number) =>
     val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -202,6 +351,63 @@ export default function AdminClientesPage() {
       'Dez',
     ];
     return months[m] || '';
+  };
+
+  /**
+   * Constrói link contextualizado do WhatsApp de acordo com o segmento ativo ou situação da cliente
+   */
+  const buildWhatsAppUrl = (
+    c: CustomerSummary,
+    targetSegment?: SmartSegmentType | null
+  ) => {
+    const cleanPhone = c.phone.replace(/\D/g, '');
+    const fullPhone =
+      cleanPhone.length === 10 || cleanPhone.length === 11 ? `55${cleanPhone}` : cleanPhone;
+    const firstName = c.name.trim().split(/\s+/)[0] || 'Cliente';
+    const saldo = `R$ ${formatBRL(c.balanceInfo?.availableBalance || 0)}`;
+    const expiringAmt = c.balanceInfo?.expiringAmount || c.balanceInfo?.availableBalance || 0;
+    const expiringSaldo = `R$ ${formatBRL(expiringAmt)}`;
+    const days = c.balanceInfo?.expiringInDays;
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : 'https://lamarka.com.br';
+    const walletUrl = `${origin}/c/${c.magicToken}`;
+
+    const seg = targetSegment || activeSegment;
+
+    if (seg === 'INACTIVE_45D') {
+      const text = `Olá, ${firstName}! Sentimos sua falta aqui na La Marka... você tem ${saldo} de saldo esperando por você! ✨\n\nVenha nos visitar e conferir as novidades da nossa nova coleção:\n👉 ${walletUrl}`;
+      return `https://wa.me/${fullPhone}?text=${encodeURIComponent(text)}`;
+    }
+
+    if (seg === 'EXPIRING_15D') {
+      const text = `Olá, ${firstName}! Seu cashback de ${expiringSaldo} expira em breve...${
+        days !== null && days !== undefined ? ` (em ${days} dia${days !== 1 ? 's' : ''})!` : ''
+      } Não deixe seu saldo expirar! Venha escolher suas peças favoritas na La Marka 💕\n\nConfira seu extrato aqui:\n👉 ${walletUrl}`;
+      return `https://wa.me/${fullPhone}?text=${encodeURIComponent(text)}`;
+    }
+
+    if (seg === 'BIRTHDAYS_WEEK') {
+      const text = `Olá, ${firstName}! Parabéns pelo seu aniversário nesta semana! A La Marka comemora o seu dia com você! 🎂✨\nVocê tem ${saldo} de saldo especial esperando por você para escolher o seu presente!\n\nConfira sua carteira digital:\n👉 ${walletUrl}`;
+      return `https://wa.me/${fullPhone}?text=${encodeURIComponent(text)}`;
+    }
+
+    if (seg === 'TOP_TIER') {
+      const text = `Olá, ${firstName}! Como uma de nossas clientes VIP mais especiais da La Marka, preparamos novidades exclusivas para você! ✨\nVocê tem ${saldo} de saldo disponível para novas peças.\n\nVeja sua carteira VIP:\n👉 ${walletUrl}`;
+      return `https://wa.me/${fullPhone}?text=${encodeURIComponent(text)}`;
+    }
+
+    // Se a cliente possui cashback prestes a expirar no fluxo padrão
+    if (
+      c.balanceInfo?.expiringInDays !== null &&
+      c.balanceInfo?.expiringInDays !== undefined &&
+      c.balanceInfo.expiringInDays <= 15 &&
+      c.balanceInfo.availableBalance > 0
+    ) {
+      const text = `Olá, ${firstName}! Seu cashback de ${expiringSaldo} expira em breve... Não deixe seu saldo expirar! Venha escolher suas peças favoritas na La Marka 💕\n\nConfira seu extrato aqui:\n👉 ${walletUrl}`;
+      return `https://wa.me/${fullPhone}?text=${encodeURIComponent(text)}`;
+    }
+
+    return `https://wa.me/${fullPhone}`;
   };
 
   const handleOpenEditModal = (customer: CustomerSummary) => {
@@ -250,7 +456,6 @@ export default function AdminClientesPage() {
 
       await fetchCustomers(searchQuery);
 
-      // Atualiza cliente selecionada na gaveta 360 se for a mesma
       if (selectedCustomer && selectedCustomer.id === editingCustomer.id) {
         setSelectedCustomer((prev) =>
           prev
@@ -351,7 +556,214 @@ export default function AdminClientesPage() {
         </div>
       </div>
 
-      {/* Barra de Pesquisa, Filtros e Ordenação */}
+      {/* Barra Elegante de Filtros Rápidos de Inteligência & Recompra */}
+      <div className="bg-gradient-to-r from-[#FAF6F0] via-white to-[#FAF6F0] rounded-3xl border border-[#DFB76C]/35 p-5 shadow-card">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#DFB76C]/20 border border-[#DFB76C]/40 flex items-center justify-center text-[#9A7328] shadow-2xs">
+              <Sparkles className="w-4 h-4 text-[#B89648]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-serif font-semibold text-lamarka-900 leading-tight">
+                  Inteligência de Recompra & Retenção
+                </h2>
+                <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-[#DFB76C]/20 text-[#8C6219] border border-[#DFB76C]/30">
+                  Ações Rápidas
+                </span>
+              </div>
+              <p className="text-xs text-lamarka-600 font-light mt-0.5">
+                Segmentação preditiva para ações de fidelização com disparos contextuais de WhatsApp prontos em 1 clique.
+              </p>
+            </div>
+          </div>
+
+          {activeSegment && (
+            <button
+              type="button"
+              onClick={() => setActiveSegment(null)}
+              className="text-xs text-lamarka-600 hover:text-lamarka-900 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-lamarka-200 bg-white hover:bg-lamarka-100 transition-colors shadow-2xs self-start sm:self-auto font-medium"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Ver Todas as Clientes</span>
+            </button>
+          )}
+        </div>
+
+        {/* Badges de Filtros Rápidos com Contadores em Tempo Real */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* [🛍️ Inativas há 45d] */}
+          <button
+            type="button"
+            onClick={() => handleToggleSegment('INACTIVE_45D')}
+            className={`p-3.5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between gap-2.5 ${
+              activeSegment === 'INACTIVE_45D'
+                ? 'bg-amber-900 text-white border-amber-950 shadow-md ring-2 ring-amber-700/50'
+                : 'bg-white hover:bg-amber-50/60 border-amber-200/90 text-lamarka-900 shadow-2xs'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-lg">🛍️</span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                  activeSegment === 'INACTIVE_45D'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-amber-100 text-amber-900 border border-amber-300/80'
+                }`}
+              >
+                {segmentCounts.INACTIVE_45D}
+              </span>
+            </div>
+            <div>
+              <div className="text-xs font-semibold leading-tight">Inativas há 45d</div>
+              <div
+                className={`text-[10px] font-light mt-0.5 ${
+                  activeSegment === 'INACTIVE_45D' ? 'text-amber-200' : 'text-lamarka-500'
+                }`}
+              >
+                Reativar com saldo disponível
+              </div>
+            </div>
+          </button>
+
+          {/* [⚠️ Vencendo em 15d] */}
+          <button
+            type="button"
+            onClick={() => handleToggleSegment('EXPIRING_15D')}
+            className={`p-3.5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between gap-2.5 ${
+              activeSegment === 'EXPIRING_15D'
+                ? 'bg-rose-900 text-white border-rose-950 shadow-md ring-2 ring-rose-700/50'
+                : 'bg-white hover:bg-rose-50/60 border-rose-200/90 text-lamarka-900 shadow-2xs'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-lg">⚠️</span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                  activeSegment === 'EXPIRING_15D'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-rose-100 text-rose-900 border border-rose-300/80'
+                }`}
+              >
+                {segmentCounts.EXPIRING_15D}
+              </span>
+            </div>
+            <div>
+              <div className="text-xs font-semibold leading-tight">Vencendo em 15d</div>
+              <div
+                className={`text-[10px] font-light mt-0.5 ${
+                  activeSegment === 'EXPIRING_15D' ? 'text-rose-200' : 'text-lamarka-500'
+                }`}
+              >
+                Evitar perda de cashback
+              </div>
+            </div>
+          </button>
+
+          {/* [🎂 Aniversariantes da Semana] */}
+          <button
+            type="button"
+            onClick={() => handleToggleSegment('BIRTHDAYS_WEEK')}
+            className={`p-3.5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between gap-2.5 ${
+              activeSegment === 'BIRTHDAYS_WEEK'
+                ? 'bg-purple-900 text-white border-purple-950 shadow-md ring-2 ring-purple-700/50'
+                : 'bg-white hover:bg-purple-50/60 border-purple-200/90 text-lamarka-900 shadow-2xs'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-lg">🎂</span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                  activeSegment === 'BIRTHDAYS_WEEK'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-purple-100 text-purple-900 border border-purple-300/80'
+                }`}
+              >
+                {segmentCounts.BIRTHDAYS_WEEK}
+              </span>
+            </div>
+            <div>
+              <div className="text-xs font-semibold leading-tight">Aniversariantes (7d)</div>
+              <div
+                className={`text-[10px] font-light mt-0.5 ${
+                  activeSegment === 'BIRTHDAYS_WEEK' ? 'text-purple-200' : 'text-lamarka-500'
+                }`}
+              >
+                Parabenizar & enviar presente
+              </div>
+            </div>
+          </button>
+
+          {/* [👑 VIP / Top Tier] */}
+          <button
+            type="button"
+            onClick={() => handleToggleSegment('TOP_TIER')}
+            className={`p-3.5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between gap-2.5 ${
+              activeSegment === 'TOP_TIER'
+                ? 'bg-lamarka-900 text-white border-lamarka-950 shadow-md ring-2 ring-[#DFB76C]/60'
+                : 'bg-white hover:bg-[#FAF6F0] border-[#DFB76C]/50 text-lamarka-900 shadow-2xs'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-lg">👑</span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                  activeSegment === 'TOP_TIER'
+                    ? 'bg-[#DFB76C]/30 text-amber-200'
+                    : 'bg-[#DFB76C]/20 text-[#8C6219] border border-[#DFB76C]/40'
+                }`}
+              >
+                {segmentCounts.TOP_TIER}
+              </span>
+            </div>
+            <div>
+              <div className="text-xs font-semibold leading-tight">Clientes VIP / Top</div>
+              <div
+                className={`text-[10px] font-light mt-0.5 ${
+                  activeSegment === 'TOP_TIER' ? 'text-amber-200' : 'text-lamarka-500'
+                }`}
+              >
+                Maior fidelidade & volume
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {/* Banner Informativo do Segmento Selecionado */}
+        {activeSegment && (
+          <div className="mt-4 pt-3.5 border-t border-lamarka-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 text-lamarka-700 font-medium">
+              <span className="w-2 h-2 rounded-full bg-[#DFB76C] animate-ping" />
+              {activeSegment === 'INACTIVE_45D' && (
+                <span>
+                  Exibindo clientes sem compras há mais de 45 dias. Use o botão <strong>Recompra WhatsApp</strong> para incentivá-las a retornar aproveitando seu saldo.
+                </span>
+              )}
+              {activeSegment === 'EXPIRING_15D' && (
+                <span>
+                  Exibindo clientes com cashback vencendo nos próximos 15 dias. Use o botão <strong>Avisar Vencimento</strong> para lembrá-las antes de perderem o saldo.
+                </span>
+              )}
+              {activeSegment === 'BIRTHDAYS_WEEK' && (
+                <span>
+                  Exibindo aniversariantes dos próximos 7 dias. Envie uma mensagem carinhosa de parabéns pelo WhatsApp!
+                </span>
+              )}
+              {activeSegment === 'TOP_TIER' && (
+                <span>
+                  Exibindo clientes de maior fidelidade e volume de compras no clube La Marka.
+                </span>
+              )}
+            </div>
+
+            <span className="text-[11px] text-lamarka-500 shrink-0 font-light">
+              {filteredCustomers.length} cliente{filteredCustomers.length !== 1 ? 's' : ''} no segmento
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Barra de Pesquisa, Filtros Clássicos e Ordenação */}
       <div className="bg-white rounded-2xl border border-lamarka-200/90 p-4 shadow-2xs flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           {/* Campo de Busca */}
@@ -382,13 +794,16 @@ export default function AdminClientesPage() {
           </div>
         </div>
 
-        {/* Abas de Filtros Rápidos */}
+        {/* Abas de Filtros Clássicos */}
         <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-lamarka-100">
           <button
             type="button"
-            onClick={() => setActiveFilter('ALL')}
+            onClick={() => {
+              setActiveFilter('ALL');
+              setActiveSegment(null);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              activeFilter === 'ALL'
+              activeFilter === 'ALL' && !activeSegment
                 ? 'bg-lamarka-800 text-white shadow-2xs'
                 : 'text-lamarka-600 hover:bg-lamarka-100'
             }`}
@@ -397,9 +812,12 @@ export default function AdminClientesPage() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveFilter('WITH_BALANCE')}
+            onClick={() => {
+              setActiveFilter('WITH_BALANCE');
+              setActiveSegment(null);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              activeFilter === 'WITH_BALANCE'
+              activeFilter === 'WITH_BALANCE' && !activeSegment
                 ? 'bg-lamarka-800 text-white shadow-2xs'
                 : 'text-lamarka-600 hover:bg-lamarka-100'
             }`}
@@ -408,9 +826,12 @@ export default function AdminClientesPage() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveFilter('EXPIRING')}
+            onClick={() => {
+              setActiveFilter('EXPIRING');
+              setActiveSegment(null);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              activeFilter === 'EXPIRING'
+              activeFilter === 'EXPIRING' && !activeSegment
                 ? 'bg-lamarka-800 text-white shadow-2xs'
                 : 'text-lamarka-600 hover:bg-lamarka-100'
             }`}
@@ -419,9 +840,12 @@ export default function AdminClientesPage() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveFilter('BIRTHDAYS')}
+            onClick={() => {
+              setActiveFilter('BIRTHDAYS');
+              setActiveSegment(null);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              activeFilter === 'BIRTHDAYS'
+              activeFilter === 'BIRTHDAYS' && !activeSegment
                 ? 'bg-lamarka-800 text-white shadow-2xs'
                 : 'text-lamarka-600 hover:bg-lamarka-100'
             }`}
@@ -433,7 +857,7 @@ export default function AdminClientesPage() {
 
       {/* Lista de Clientes */}
       <div className="bg-white rounded-3xl border border-lamarka-200/90 shadow-sm overflow-hidden">
-        {loading ? (
+        {loading || loadingSegment ? (
           <div className="py-16 text-center text-xs text-lamarka-500 flex flex-col items-center justify-center gap-2">
             <div className="w-6 h-6 border-2 border-lamarka-600 border-t-transparent rounded-full animate-spin" />
             <span>Buscando clientes no clube...</span>
@@ -443,7 +867,9 @@ export default function AdminClientesPage() {
             <Users className="w-8 h-8 text-lamarka-300" />
             <span className="font-medium text-sm text-lamarka-700">Nenhuma cliente encontrada</span>
             <p className="text-lamarka-400 font-light max-w-sm">
-              Tente buscar por outro termo ou cadastre novas clientes no balcão de vendas.
+              {activeSegment
+                ? 'Não há clientes correspondentes a este segmento inteligente no momento.'
+                : 'Tente buscar por outro termo ou cadastre novas clientes no balcão de vendas.'}
             </p>
           </div>
         ) : (
@@ -458,6 +884,9 @@ export default function AdminClientesPage() {
 
               const hasExpiring =
                 c.balanceInfo.expiringInDays !== null && c.balanceInfo.expiringInDays <= 15;
+              const customerIsInactive = isInactive(c);
+              const customerIsBirthdayWeek = isBirthdayWeek(c);
+              const customerIsTopTier = isTopTier(c);
 
               return (
                 <div
@@ -478,21 +907,46 @@ export default function AdminClientesPage() {
                       {initials}
                     </div>
 
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-sm sm:text-base font-semibold text-lamarka-900 leading-tight group-hover:text-lamarka-950 transition-colors">
                           {c.name}
                         </h2>
 
-                        {c.birthMonth === currentMonth && (
+                        {/* Badges de Inteligência de Segmentos */}
+                        {customerIsBirthdayWeek ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 text-[10px] font-semibold border border-purple-200">
+                            🎂 Aniversariante (7d)
+                          </span>
+                        ) : c.birthMonth === currentMonth ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-semibold border border-amber-200">
                             🎂 Aniversariante do Mês
+                          </span>
+                        ) : null}
+
+                        {hasExpiring && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 text-[10px] font-semibold border border-rose-200">
+                            ⚠️ Expira em {c.balanceInfo.expiringInDays}d
+                          </span>
+                        )}
+
+                        {customerIsInactive && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-semibold border border-amber-200">
+                            🛍️ Inativa &gt;45d
+                          </span>
+                        )}
+
+                        {customerIsTopTier && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#DFB76C]/20 text-[#8C6219] text-[10px] font-semibold border border-[#DFB76C]/40">
+                            👑 VIP
                           </span>
                         )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 text-xs text-lamarka-600 font-light">
-                        <span>Tel: <strong>{formatPhone(c.phone)}</strong></span>
+                        <span>
+                          Tel: <strong>{formatPhone(c.phone)}</strong>
+                        </span>
                         {c.cpf && <span>CPF: {c.cpf}</span>}
                         {c.birthDay && c.birthMonth && (
                           <span className="inline-flex items-center gap-1 text-lamarka-500">
@@ -521,7 +975,8 @@ export default function AdminClientesPage() {
                       {hasExpiring ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700">
                           <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
-                          R$ {formatBRL(c.balanceInfo.expiringAmount)} expira em {c.balanceInfo.expiringInDays}d
+                          R$ {formatBRL(c.balanceInfo.expiringAmount)} expira em{' '}
+                          {c.balanceInfo.expiringInDays}d
                         </span>
                       ) : c.balanceInfo.availableBalance > 0 ? (
                         <span className="text-[11px] text-lamarka-500 font-light">
@@ -549,6 +1004,68 @@ export default function AdminClientesPage() {
 
                     {/* Ações com a Cliente */}
                     <div className="flex items-center gap-2 ml-auto lg:ml-0">
+                      {/* Botão Contextual de WhatsApp para Ações de Retenção */}
+                      {activeSegment === 'INACTIVE_45D' ? (
+                        <a
+                          href={buildWhatsAppUrl(c, 'INACTIVE_45D')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Enviar WhatsApp de recompra: 'Olá, {primeiro_nome}! Sentimos sua falta aqui na La Marka... você tem {saldo_total} de saldo esperando por você!'"
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-amber-700"
+                        >
+                          <MessageCircle className="w-4 h-4 text-amber-100" strokeWidth={1.5} />
+                          <span>Recompra WhatsApp</span>
+                        </a>
+                      ) : activeSegment === 'EXPIRING_15D' ? (
+                        <a
+                          href={buildWhatsAppUrl(c, 'EXPIRING_15D')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Enviar aviso de vencimento: 'Olá, {primeiro_nome}! Seu cashback de {saldo_total} expira em breve...'"
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-rose-700"
+                        >
+                          <MessageCircle className="w-4 h-4 text-rose-100" strokeWidth={1.5} />
+                          <span>Avisar Vencimento</span>
+                        </a>
+                      ) : activeSegment === 'BIRTHDAYS_WEEK' ? (
+                        <a
+                          href={buildWhatsAppUrl(c, 'BIRTHDAYS_WEEK')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Enviar parabéns de aniversário via WhatsApp"
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-purple-700"
+                        >
+                          <MessageCircle className="w-4 h-4 text-purple-100" strokeWidth={1.5} />
+                          <span>Parabéns WhatsApp</span>
+                        </a>
+                      ) : activeSegment === 'TOP_TIER' ? (
+                        <a
+                          href={buildWhatsAppUrl(c, 'TOP_TIER')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Enviar mensagem VIP no WhatsApp"
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-lamarka-950"
+                        >
+                          <MessageCircle className="w-4 h-4 text-[#DFB76C]" strokeWidth={1.5} />
+                          <span>VIP WhatsApp</span>
+                        </a>
+                      ) : (
+                        <a
+                          href={buildWhatsAppUrl(c, null)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Conversar no WhatsApp com mensagem personalizada"
+                          className="p-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs"
+                        >
+                          <MessageCircle className="w-4 h-4" strokeWidth={1.5} />
+                        </a>
+                      )}
+
                       {/* Botão Ver Detalhes 360º (Twenty CRM) */}
                       <button
                         type="button"
@@ -580,18 +1097,6 @@ export default function AdminClientesPage() {
                           <Copy className="w-4 h-4" strokeWidth={1.5} />
                         )}
                       </button>
-
-                      {/* Botão WhatsApp */}
-                      <a
-                        href={`https://wa.me/55${c.phone.replace(/\D/g, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        title="Conversar no WhatsApp"
-                        className="p-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs"
-                      >
-                        <MessageCircle className="w-4 h-4" strokeWidth={1.5} />
-                      </a>
 
                       {/* Botão Ver Carteira Digital */}
                       <Link
@@ -790,6 +1295,7 @@ export default function AdminClientesPage() {
           </div>
         </div>
       )}
+
       {/* Gaveta Lateral Deslizante (Slide-over Drawer) 360º de Clientes inspirada no Twenty CRM */}
       <CustomerDrawer
         customer={selectedCustomer}

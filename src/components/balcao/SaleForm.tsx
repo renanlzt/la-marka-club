@@ -60,13 +60,14 @@ export function SaleForm({
 
   const netPayable = Math.max(0, numPurchase - numRedeem);
 
-  // Percentual efetivo baseado nas configurações ou campanha ativa
-  let effectivePercentage = settings?.defaultCashbackPercentage ?? 5.0;
+  // Percentual base de fidelidade VIP da cliente (respeitando campanhas promocionais ativas)
+  const basePercentage = customer.vipTier?.percentage ?? (settings?.defaultCashbackPercentage ?? 1.0);
+  let effectivePercentage = basePercentage;
   if (activeCampaign) {
     if (activeCampaign.type === 'PERCENTAGE_OVERRIDE') {
       effectivePercentage = activeCampaign.value;
     } else if (activeCampaign.type === 'MULTIPLIER') {
-      effectivePercentage = Number((effectivePercentage * activeCampaign.value).toFixed(2));
+      effectivePercentage = Number((basePercentage * activeCampaign.value).toFixed(2));
     }
   }
 
@@ -109,6 +110,8 @@ export function SaleForm({
             purchaseAmount: numPurchase,
             redeemAmount: numRedeem,
             operatorName: operatorName.trim() || 'Balcão',
+            applyVipTier: true,
+            customCashbackPercentage: effectivePercentage,
           },
         }),
       });
@@ -129,44 +132,72 @@ export function SaleForm({
   return (
     <div className="w-full bg-white rounded-3xl border border-lamarka-200/90 p-6 sm:p-7 shadow-card">
       {/* Resumo da Cliente Selecionada */}
-      <div className="flex items-center justify-between pb-5 border-b border-lamarka-100">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-lamarka-100/80 border border-lamarka-200 text-lamarka-800 flex items-center justify-center font-serif font-bold text-base shrink-0 shadow-2xs">
-            {customer.name
-              .split(' ')
-              .map((n) => n[0])
-              .slice(0, 2)
-              .join('')
-              .toUpperCase()}
+      <div className="pb-5 border-b border-lamarka-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-lamarka-100/80 border border-lamarka-200 text-lamarka-800 flex items-center justify-center font-serif font-bold text-base shrink-0 shadow-2xs">
+              {customer.name
+                .split(' ')
+                .map((n) => n[0])
+                .slice(0, 2)
+                .join('')
+                .toUpperCase()}
+            </div>
+            <div>
+              <span className="text-[10px] font-semibold text-lamarka-500 uppercase tracking-[0.18em] block">
+                Cliente no Caixa
+              </span>
+              <h3 className="text-xl sm:text-2xl font-serif font-medium text-lamarka-900 leading-tight">
+                {customer.name}
+              </h3>
+              <p className="text-xs text-lamarka-600 font-light mt-0.5">
+                Tel: {customer.phone} {customer.birthDay && `• Aniversário: ${customer.birthDay}/${customer.birthMonth}`}
+              </p>
+            </div>
           </div>
-          <div>
-            <span className="text-[10px] font-semibold text-lamarka-500 uppercase tracking-[0.18em] block">
-              Cliente no Caixa
+
+          <div className="text-right">
+            <span className="text-[10px] font-semibold text-lamarka-500 uppercase tracking-wider block">
+              Saldo Disponível
             </span>
-            <h3 className="text-xl sm:text-2xl font-serif font-medium text-lamarka-900 leading-tight">
-              {customer.name}
-            </h3>
-            <p className="text-xs text-lamarka-600 font-light mt-0.5">
-              Tel: {customer.phone} {customer.birthDay && `• Aniversário: ${customer.birthDay}/${customer.birthMonth}`}
-            </p>
+            <span className="text-xl sm:text-2xl font-serif font-semibold text-emerald-800 block">
+              R$ {availableBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+            <button
+              type="button"
+              onClick={onClearCustomer}
+              className="text-[11px] text-lamarka-400 hover:text-lamarka-800 block mt-0.5 underline transition-colors"
+            >
+              Trocar cliente
+            </button>
           </div>
         </div>
 
-        <div className="text-right">
-          <span className="text-[10px] font-semibold text-lamarka-500 uppercase tracking-wider block">
-            Saldo Disponível
-          </span>
-          <span className="text-xl sm:text-2xl font-serif font-semibold text-emerald-800 block">
-            R$ {availableBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
-          <button
-            type="button"
-            onClick={onClearCustomer}
-            className="text-[11px] text-lamarka-400 hover:text-lamarka-800 block mt-0.5 underline transition-colors"
-          >
-            Trocar cliente
-          </button>
-        </div>
+        {/* Selo do Nível VIP da Cliente em Destaque */}
+        {customer.vipTier && (
+          <div className="mt-3.5 pt-3 border-t border-lamarka-100/70 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-2xs ${customer.vipTier.badgeColor}`}
+              >
+                {customer.vipTier.tier === 'DIAMANTE' && '👑'}
+                {customer.vipTier.tier === 'OURO' && '✨'}
+                {customer.vipTier.tier === 'PRATA' && '🥈'}
+                <span>{customer.vipTier.label} — {customer.vipTier.percentage}% Cashback</span>
+              </span>
+            </div>
+
+            {customer.vipTier.nextTierSpentRequired !== null && customer.vipTier.nextTierSpentRequired > 0 ? (
+              <span className="text-[11px] text-lamarka-600 font-light">
+                Faltam <strong className="font-semibold text-lamarka-800">R$ {customer.vipTier.nextTierSpentRequired.toFixed(2)}</strong> em compras para o próximo nível
+              </span>
+            ) : (
+              <span className="text-[11px] text-purple-700 font-medium flex items-center gap-1">
+                👑 Categoria Máxima VIP Diamante
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {customer.balanceInfo.expiringAmount > 0 && customer.balanceInfo.expiringInDays && (
@@ -277,6 +308,13 @@ export function SaleForm({
                 <Sparkles className="w-3.5 h-3.5 text-[#DFB76C]" />
                 + R$ {estimatedCashback.toFixed(2)}
               </span>
+              {customer.vipTier && (
+                <span className="text-[10px] text-emerald-800/80 font-medium block mt-0.5">
+                  Taxa {customer.vipTier.label} ({customer.vipTier.percentage}%)
+                  {activeCampaign && activeCampaign.type === 'MULTIPLIER' && ` × ${activeCampaign.value} (${activeCampaign.name})`}
+                  {activeCampaign && activeCampaign.type === 'PERCENTAGE_OVERRIDE' && ` (Campanha: ${activeCampaign.name})`}
+                </span>
+              )}
             </div>
           </div>
         )}

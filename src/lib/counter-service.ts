@@ -9,6 +9,7 @@ import { formatWhatsAppMessage, generateWhatsAppLink } from './whatsapp';
 import { getActiveCampaign } from './campaigns-service';
 import { getAppBaseUrl } from './url';
 import { nanoid } from 'nanoid';
+import { getCustomerVipTier, VipTierInfo } from './vip-tier-service';
 
 export interface CounterCustomerSummary {
   id: string;
@@ -19,6 +20,7 @@ export interface CounterCustomerSummary {
   birthMonth: number | null;
   magicToken: string;
   balanceInfo: CustomerBalanceInfo;
+  vipTier?: VipTierInfo;
 }
 
 export interface CounterSaleResult {
@@ -34,6 +36,7 @@ export interface CounterSaleResult {
   cashbackEarned: number;
   newBalance: number;
   balanceInfo: CustomerBalanceInfo;
+  vipTier?: VipTierInfo;
   whatsAppMessage: string;
   whatsAppLink: string;
 }
@@ -62,6 +65,7 @@ export async function searchCustomerForCounter(
   if (!customer) return null;
 
   const balanceInfo = await getCustomerBalance(customer.id);
+  const vipTier = await getCustomerVipTier(customer.id);
 
   return {
     id: customer.id,
@@ -72,6 +76,7 @@ export async function searchCustomerForCounter(
     birthMonth: customer.birthMonth,
     magicToken: customer.magicToken,
     balanceInfo,
+    vipTier,
   };
 }
 
@@ -131,6 +136,8 @@ export async function processCounterSale(data: {
   redeemAmount?: number;
   operatorName?: string;
   customMessageNote?: string;
+  customCashbackPercentage?: number;
+  applyVipTier?: boolean;
 }): Promise<CounterSaleResult> {
   const { customerId, purchaseAmount, redeemAmount = 0, operatorName = 'Caixa' } = data;
 
@@ -170,16 +177,36 @@ export async function processCounterSale(data: {
     Math.max(0, purchaseAmount - actualRedeemed).toFixed(2)
   );
 
+  // Consulta nível VIP atual da cliente antes do novo crédito
+  const initialVipTier = await getCustomerVipTier(customerId);
+
   // 3. Concede novo cashback sobre o valor líquido pago
   let cashbackEarned = 0;
   if (netAmountToPay > 0) {
     const activeCampaign = await getActiveCampaign();
-    const earnRes = await grantCashback(customerId, netAmountToPay, operatorName, activeCampaign?.id);
+    let campaignIdToPass: string | undefined = activeCampaign?.id;
+    let percentageToApply: number | undefined = undefined;
+
+    if (typeof data.customCashbackPercentage === 'number') {
+      percentageToApply = data.customCashbackPercentage;
+      campaignIdToPass = undefined; // Já calculado com precisão na origem
+    } else if (data.applyVipTier) {
+      percentageToApply = initialVipTier.percentage;
+    }
+
+    const earnRes = await grantCashback(
+      customerId,
+      netAmountToPay,
+      operatorName,
+      campaignIdToPass,
+      percentageToApply
+    );
     cashbackEarned = earnRes.credit.initialAmount;
   }
 
   // 4. Saldo atualizado e prazos
   const balanceInfo = await getCustomerBalance(customerId);
+  const updatedVipTier = await getCustomerVipTier(customerId);
   const firstName = customer.name.trim().split(' ')[0];
 
   const walletUrl = `${getAppBaseUrl()}/c/${customer.magicToken}`;
@@ -227,6 +254,7 @@ export async function processCounterSale(data: {
     cashbackEarned,
     newBalance: balanceInfo.availableBalance,
     balanceInfo,
+    vipTier: updatedVipTier,
     whatsAppMessage,
     whatsAppLink,
   };

@@ -134,7 +134,8 @@ export async function grantCashback(
   customerId: string,
   purchaseAmount: number,
   operatorName = 'Balcão',
-  campaignId?: string
+  campaignId?: string,
+  customPercentage?: number
 ) {
   if (!customerId || typeof customerId !== 'string') {
     throw new Error('ID da cliente é obrigatório.');
@@ -148,7 +149,10 @@ export async function grantCashback(
     where: { id: 'default' },
   });
 
-  let percentage = settings?.defaultCashbackPercentage ?? 5.0;
+  let percentage =
+    customPercentage !== undefined
+      ? customPercentage
+      : (settings?.defaultCashbackPercentage ?? 5.0);
   const validityDays = settings?.defaultExpirationDays ?? 45;
 
   // Verifica se há campanha ativa aplicável
@@ -160,7 +164,7 @@ export async function grantCashback(
       if (campaign.type === 'PERCENTAGE_OVERRIDE') {
         percentage = campaign.value;
       } else if (campaign.type === 'MULTIPLIER') {
-        percentage = percentage * campaign.value;
+        percentage = Number((percentage * campaign.value).toFixed(2));
       }
     }
   }
