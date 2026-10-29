@@ -895,19 +895,19 @@ export default function AdminClientesPage() {
                     setSelectedCustomer(c);
                     setIsDrawerOpen(true);
                   }}
-                  className={`p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer transition-all duration-150 border-l-4 group ${
+                  className={`p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 lg:gap-5 cursor-pointer transition-all duration-150 border-l-4 group ${
                     selectedCustomer?.id === c.id && isDrawerOpen
                       ? 'bg-lamarka-100/70 border-l-lamarka-800 shadow-2xs'
                       : 'border-l-transparent hover:border-l-lamarka-500/80 hover:bg-lamarka-50/70'
                   }`}
                 >
                   {/* Dados Básicos da Cliente */}
-                  <div className="flex items-start sm:items-center gap-3.5">
+                  <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
                     <div className="w-11 h-11 rounded-2xl bg-lamarka-100 border border-lamarka-200 text-lamarka-800 flex items-center justify-center shrink-0 font-serif font-bold text-sm shadow-2xs group-hover:border-lamarka-300 group-hover:bg-[#EADBD7] transition-colors">
                       {initials}
                     </div>
 
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-sm sm:text-base font-semibold text-lamarka-900 leading-tight group-hover:text-lamarka-950 transition-colors">
                           {c.name}
@@ -915,35 +915,35 @@ export default function AdminClientesPage() {
 
                         {/* Badges de Inteligência de Segmentos */}
                         {customerIsBirthdayWeek ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 text-[10px] font-semibold border border-purple-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 text-[10px] font-semibold border border-purple-200 shrink-0">
                             🎂 Aniversariante (7d)
                           </span>
                         ) : c.birthMonth === currentMonth ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-semibold border border-amber-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-semibold border border-amber-200 shrink-0">
                             🎂 Aniversariante do Mês
                           </span>
                         ) : null}
 
                         {hasExpiring && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 text-[10px] font-semibold border border-rose-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 text-[10px] font-semibold border border-rose-200 shrink-0">
                             ⚠️ Expira em {c.balanceInfo.expiringInDays}d
                           </span>
                         )}
 
                         {customerIsInactive && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-semibold border border-amber-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-semibold border border-amber-200 shrink-0">
                             🛍️ Inativa &gt;45d
                           </span>
                         )}
 
                         {customerIsTopTier && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#DFB76C]/20 text-[#8C6219] text-[10px] font-semibold border border-[#DFB76C]/40">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#DFB76C]/20 text-[#8C6219] text-[10px] font-semibold border border-[#DFB76C]/40 shrink-0">
                             👑 VIP
                           </span>
                         )}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-lamarka-600 font-light">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-lamarka-600 font-light">
                         <span>
                           Tel: <strong>{formatPhone(c.phone)}</strong>
                         </span>
@@ -958,14 +958,14 @@ export default function AdminClientesPage() {
                     </div>
                   </div>
 
-                  {/* Saldo e Vencimento */}
-                  <div className="flex flex-wrap items-center gap-4 lg:gap-6 self-start lg:self-auto">
+                  {/* Saldo, Histórico e Ações */}
+                  <div className="flex items-center justify-between lg:justify-end gap-3 sm:gap-4 lg:gap-5 shrink-0 w-full lg:w-auto pt-3 lg:pt-0 border-t lg:border-t-0 border-lamarka-100/70">
                     {/* Saldo Atual */}
-                    <div className="flex flex-col">
+                    <div className="flex flex-col shrink-0 min-w-[90px] sm:min-w-[105px] text-left lg:text-right">
                       <span className="text-[10px] text-lamarka-500 font-medium uppercase tracking-wider">
                         Saldo Disponível
                       </span>
-                      <div className="flex items-baseline gap-1">
+                      <div className="flex items-baseline gap-1 lg:justify-end">
                         <span className="text-base sm:text-lg font-serif font-bold text-lamarka-900">
                           R$ {formatBRL(c.balanceInfo.availableBalance)}
                         </span>
@@ -973,24 +973,24 @@ export default function AdminClientesPage() {
 
                       {/* Aviso de Vencimento se houver */}
                       {hasExpiring ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 lg:justify-end">
                           <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
                           R$ {formatBRL(c.balanceInfo.expiringAmount)} expira em{' '}
                           {c.balanceInfo.expiringInDays}d
                         </span>
                       ) : c.balanceInfo.availableBalance > 0 ? (
-                        <span className="text-[11px] text-lamarka-500 font-light">
+                        <span className="text-[11px] text-lamarka-500 font-light lg:text-right">
                           Válido em carteira
                         </span>
                       ) : (
-                        <span className="text-[11px] text-lamarka-400 font-light">
+                        <span className="text-[11px] text-lamarka-400 font-light lg:text-right">
                           Sem saldo acumulado
                         </span>
                       )}
                     </div>
 
                     {/* Resumo de Compras */}
-                    <div className="hidden sm:flex flex-col text-right lg:text-left border-l border-lamarka-100 pl-4">
+                    <div className="hidden xl:flex flex-col shrink-0 min-w-[95px] text-left border-l border-lamarka-100 pl-4">
                       <span className="text-[10px] text-lamarka-500 font-medium uppercase tracking-wider">
                         Histórico
                       </span>
@@ -1003,7 +1003,7 @@ export default function AdminClientesPage() {
                     </div>
 
                     {/* Ações com a Cliente */}
-                    <div className="flex items-center gap-2 ml-auto lg:ml-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {/* Botão Contextual de WhatsApp para Ações de Retenção */}
                       {activeSegment === 'INACTIVE_45D' ? (
                         <a
@@ -1012,10 +1012,10 @@ export default function AdminClientesPage() {
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
                           title="Enviar WhatsApp de recompra: 'Olá, {primeiro_nome}! Sentimos sua falta aqui na La Marka... você tem {saldo_total} de saldo esperando por você!'"
-                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-amber-700"
+                          className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-amber-700 shrink-0"
                         >
-                          <MessageCircle className="w-4 h-4 text-amber-100" strokeWidth={1.5} />
-                          <span>Recompra WhatsApp</span>
+                          <MessageCircle className="w-3.5 h-3.5 text-amber-100 shrink-0" strokeWidth={1.5} />
+                          <span className="whitespace-nowrap">Recompra WhatsApp</span>
                         </a>
                       ) : activeSegment === 'EXPIRING_15D' ? (
                         <a
@@ -1024,10 +1024,10 @@ export default function AdminClientesPage() {
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
                           title="Enviar aviso de vencimento: 'Olá, {primeiro_nome}! Seu cashback de {saldo_total} expira em breve...'"
-                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-rose-700"
+                          className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-rose-700 shrink-0"
                         >
-                          <MessageCircle className="w-4 h-4 text-rose-100" strokeWidth={1.5} />
-                          <span>Avisar Vencimento</span>
+                          <MessageCircle className="w-3.5 h-3.5 text-rose-100 shrink-0" strokeWidth={1.5} />
+                          <span className="whitespace-nowrap">Avisar Vencimento</span>
                         </a>
                       ) : activeSegment === 'BIRTHDAYS_WEEK' ? (
                         <a
@@ -1036,10 +1036,10 @@ export default function AdminClientesPage() {
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
                           title="Enviar parabéns de aniversário via WhatsApp"
-                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-purple-700"
+                          className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-purple-700 shrink-0"
                         >
-                          <MessageCircle className="w-4 h-4 text-purple-100" strokeWidth={1.5} />
-                          <span>Parabéns WhatsApp</span>
+                          <MessageCircle className="w-3.5 h-3.5 text-purple-100 shrink-0" strokeWidth={1.5} />
+                          <span className="whitespace-nowrap">Parabéns WhatsApp</span>
                         </a>
                       ) : activeSegment === 'TOP_TIER' ? (
                         <a
@@ -1048,10 +1048,10 @@ export default function AdminClientesPage() {
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
                           title="Enviar mensagem VIP no WhatsApp"
-                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-lamarka-950"
+                          className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white font-semibold text-xs shadow-2xs hover:shadow-xs transition-all border border-lamarka-950 shrink-0"
                         >
-                          <MessageCircle className="w-4 h-4 text-[#DFB76C]" strokeWidth={1.5} />
-                          <span>VIP WhatsApp</span>
+                          <MessageCircle className="w-3.5 h-3.5 text-[#DFB76C] shrink-0" strokeWidth={1.5} />
+                          <span className="whitespace-nowrap">VIP WhatsApp</span>
                         </a>
                       ) : (
                         <a
@@ -1060,9 +1060,9 @@ export default function AdminClientesPage() {
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
                           title="Conversar no WhatsApp com mensagem personalizada"
-                          className="p-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs"
+                          className="p-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs shrink-0"
                         >
-                          <MessageCircle className="w-4 h-4" strokeWidth={1.5} />
+                          <MessageCircle className="w-4 h-4 shrink-0" strokeWidth={1.5} />
                         </a>
                       )}
 
@@ -1075,10 +1075,10 @@ export default function AdminClientesPage() {
                           setIsDrawerOpen(true);
                         }}
                         title="Abrir Visão 360º da Cliente (Twenty CRM)"
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-lamarka-100 hover:bg-lamarka-200 text-lamarka-800 text-xs font-semibold shadow-2xs hover:shadow-xs transition-all border border-lamarka-300/60"
+                        className="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-lamarka-100 hover:bg-lamarka-200 text-lamarka-800 text-xs font-semibold shadow-2xs hover:shadow-xs transition-all border border-lamarka-300/60 shrink-0"
                       >
-                        <Eye className="w-3.5 h-3.5 text-lamarka-700" strokeWidth={1.5} />
-                        <span>360º</span>
+                        <Eye className="w-3.5 h-3.5 text-lamarka-700 shrink-0" strokeWidth={1.5} />
+                        <span className="hidden 2xl:inline">360º</span>
                       </button>
 
                       {/* Botão Copiar Link da Carteira */}
@@ -1089,12 +1089,12 @@ export default function AdminClientesPage() {
                           handleCopyLink(c.magicToken);
                         }}
                         title="Copiar link da carteira digital"
-                        className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs"
+                        className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs shrink-0"
                       >
                         {copiedToken === c.magicToken ? (
-                          <Check className="w-4 h-4 text-emerald-600" strokeWidth={1.5} />
+                          <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={1.5} />
                         ) : (
-                          <Copy className="w-4 h-4" strokeWidth={1.5} />
+                          <Copy className="w-4 h-4 shrink-0" strokeWidth={1.5} />
                         )}
                       </button>
 
@@ -1103,11 +1103,12 @@ export default function AdminClientesPage() {
                         href={`/c/${c.magicToken}`}
                         target="_blank"
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-2xs hover:shadow-xs transition-all"
+                        title="Abrir Carteira Digital da Cliente"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-2xs hover:shadow-xs transition-all shrink-0"
                       >
-                        <Wallet className="w-3.5 h-3.5 text-[#DFB76C]" strokeWidth={1.5} />
-                        <span>Ver Carteira</span>
-                        <ExternalLink className="w-3 h-3 text-lamarka-300" strokeWidth={1.5} />
+                        <Wallet className="w-3.5 h-3.5 text-[#DFB76C] shrink-0" strokeWidth={1.5} />
+                        <span className="hidden 2xl:inline whitespace-nowrap">Ver Carteira</span>
+                        <ExternalLink className="w-3 h-3 text-lamarka-300 shrink-0" strokeWidth={1.5} />
                       </Link>
 
                       {/* Botão Editar Dados */}
@@ -1118,9 +1119,9 @@ export default function AdminClientesPage() {
                           handleOpenEditModal(c);
                         }}
                         title="Editar dados da cliente"
-                        className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs"
+                        className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs shrink-0"
                       >
-                        <Pencil className="w-4 h-4" strokeWidth={1.5} />
+                        <Pencil className="w-4 h-4 shrink-0" strokeWidth={1.5} />
                       </button>
 
                       {/* Botão Ajustar Saldo */}
@@ -1128,9 +1129,9 @@ export default function AdminClientesPage() {
                         href={`/admin/ajustes?customerId=${c.id}`}
                         onClick={(e) => e.stopPropagation()}
                         title="Ajustar saldo manualmente"
-                        className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs"
+                        className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs shrink-0"
                       >
-                        <Sliders className="w-4 h-4" strokeWidth={1.5} />
+                        <Sliders className="w-4 h-4 shrink-0" strokeWidth={1.5} />
                       </Link>
                     </div>
                   </div>
