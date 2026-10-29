@@ -895,7 +895,7 @@ export default function AdminClientesPage() {
                     setSelectedCustomer(c);
                     setIsDrawerOpen(true);
                   }}
-                  className={`p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 lg:gap-5 cursor-pointer transition-all duration-150 border-l-4 group ${
+                  className={`p-4 sm:p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 xl:gap-5 cursor-pointer transition-all duration-150 border-l-4 group ${
                     selectedCustomer?.id === c.id && isDrawerOpen
                       ? 'bg-lamarka-100/70 border-l-lamarka-800 shadow-2xs'
                       : 'border-l-transparent hover:border-l-lamarka-500/80 hover:bg-lamarka-50/70'
@@ -959,13 +959,13 @@ export default function AdminClientesPage() {
                   </div>
 
                   {/* Saldo, Histórico e Ações */}
-                  <div className="flex items-center justify-between lg:justify-end gap-3 sm:gap-4 lg:gap-5 shrink-0 w-full lg:w-auto pt-3 lg:pt-0 border-t lg:border-t-0 border-lamarka-100/70">
+                  <div className="flex items-center justify-between xl:justify-end gap-3 sm:gap-4 xl:gap-5 shrink-0 w-full xl:w-auto pt-3 xl:pt-0 border-t xl:border-t-0 border-lamarka-100/70">
                     {/* Saldo Atual */}
-                    <div className="flex flex-col shrink-0 min-w-[90px] sm:min-w-[105px] text-left lg:text-right">
+                    <div className="flex flex-col shrink-0 min-w-[90px] sm:min-w-[105px] text-left xl:text-right">
                       <span className="text-[10px] text-lamarka-500 font-medium uppercase tracking-wider">
                         Saldo Disponível
                       </span>
-                      <div className="flex items-baseline gap-1 lg:justify-end">
+                      <div className="flex items-baseline gap-1 xl:justify-end">
                         <span className="text-base sm:text-lg font-serif font-bold text-lamarka-900">
                           R$ {formatBRL(c.balanceInfo.availableBalance)}
                         </span>
@@ -973,24 +973,24 @@ export default function AdminClientesPage() {
 
                       {/* Aviso de Vencimento se houver */}
                       {hasExpiring ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 lg:justify-end">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 xl:justify-end">
                           <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
                           R$ {formatBRL(c.balanceInfo.expiringAmount)} expira em{' '}
                           {c.balanceInfo.expiringInDays}d
                         </span>
                       ) : c.balanceInfo.availableBalance > 0 ? (
-                        <span className="text-[11px] text-lamarka-500 font-light lg:text-right">
+                        <span className="text-[11px] text-lamarka-500 font-light xl:text-right">
                           Válido em carteira
                         </span>
                       ) : (
-                        <span className="text-[11px] text-lamarka-400 font-light lg:text-right">
+                        <span className="text-[11px] text-lamarka-400 font-light xl:text-right">
                           Sem saldo acumulado
                         </span>
                       )}
                     </div>
 
                     {/* Resumo de Compras */}
-                    <div className="hidden xl:flex flex-col shrink-0 min-w-[95px] text-left border-l border-lamarka-100 pl-4">
+                    <div className="hidden 2xl:flex flex-col shrink-0 min-w-[95px] text-left border-l border-lamarka-100 pl-4">
                       <span className="text-[10px] text-lamarka-500 font-medium uppercase tracking-wider">
                         Histórico
                       </span>
