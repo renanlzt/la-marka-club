@@ -21,7 +21,9 @@ import {
   Filter,
   Pencil,
   X,
+  Eye,
 } from 'lucide-react';
+import CustomerDrawer, { SellerInfo } from '@/components/admin/CustomerDrawer';
 
 interface CustomerSummary {
   id: string;
@@ -54,6 +56,11 @@ export default function AdminClientesPage() {
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'WITH_BALANCE' | 'EXPIRING' | 'BIRTHDAYS'>('ALL');
   const [sortBy, setSortBy] = useState<'RECENT' | 'BALANCE_DESC' | 'NAME_ASC' | 'PURCHASES_DESC'>('RECENT');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  // Estado para Gaveta Lateral 360º de Clientes
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerSummary | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [sellers, setSellers] = useState<SellerInfo[]>([]);
 
   // Estado para Edição de Cliente
   const [editingCustomer, setEditingCustomer] = useState<CustomerSummary | null>(null);
@@ -92,6 +99,19 @@ export default function AdminClientesPage() {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    fetch('/api/admin/vendedores')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.sellers) {
+          setSellers(data.sellers);
+        }
+      })
+      .catch((err) => {
+        console.error('Erro ao buscar vendedoras para a visão 360º:', err);
+      });
+  }, []);
 
   const currentMonth = useMemo(() => new Date().getMonth() + 1, []);
 
@@ -229,6 +249,24 @@ export default function AdminClientesPage() {
       }
 
       await fetchCustomers(searchQuery);
+
+      // Atualiza cliente selecionada na gaveta 360 se for a mesma
+      if (selectedCustomer && selectedCustomer.id === editingCustomer.id) {
+        setSelectedCustomer((prev) =>
+          prev
+            ? {
+                ...prev,
+                name: editFormData.name,
+                phone: editFormData.phone.replace(/\D/g, ''),
+                cpf: editFormData.cpf ? editFormData.cpf.replace(/\D/g, '') : null,
+                birthDay: editFormData.birthDay ? parseInt(editFormData.birthDay, 10) : null,
+                birthMonth: editFormData.birthMonth ? parseInt(editFormData.birthMonth, 10) : null,
+                notes: editFormData.notes || null,
+              }
+            : null
+        );
+      }
+
       setEditingCustomer(null);
     } catch (err: any) {
       setEditError(err.message || 'Erro inesperado ao salvar.');
@@ -424,17 +462,25 @@ export default function AdminClientesPage() {
               return (
                 <div
                   key={c.id}
-                  className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-lamarka-50/40 transition-colors"
+                  onClick={() => {
+                    setSelectedCustomer(c);
+                    setIsDrawerOpen(true);
+                  }}
+                  className={`p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer transition-all duration-150 border-l-4 group ${
+                    selectedCustomer?.id === c.id && isDrawerOpen
+                      ? 'bg-lamarka-100/70 border-l-lamarka-800 shadow-2xs'
+                      : 'border-l-transparent hover:border-l-lamarka-500/80 hover:bg-lamarka-50/70'
+                  }`}
                 >
                   {/* Dados Básicos da Cliente */}
                   <div className="flex items-start sm:items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-2xl bg-lamarka-100 border border-lamarka-200 text-lamarka-800 flex items-center justify-center shrink-0 font-serif font-bold text-sm shadow-2xs">
+                    <div className="w-11 h-11 rounded-2xl bg-lamarka-100 border border-lamarka-200 text-lamarka-800 flex items-center justify-center shrink-0 font-serif font-bold text-sm shadow-2xs group-hover:border-lamarka-300 group-hover:bg-[#EADBD7] transition-colors">
                       {initials}
                     </div>
 
                     <div className="flex flex-col gap-0.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-sm sm:text-base font-semibold text-lamarka-900 leading-tight">
+                        <h2 className="text-sm sm:text-base font-semibold text-lamarka-900 leading-tight group-hover:text-lamarka-950 transition-colors">
                           {c.name}
                         </h2>
 
@@ -503,10 +549,28 @@ export default function AdminClientesPage() {
 
                     {/* Ações com a Cliente */}
                     <div className="flex items-center gap-2 ml-auto lg:ml-0">
+                      {/* Botão Ver Detalhes 360º (Twenty CRM) */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedCustomer(c);
+                          setIsDrawerOpen(true);
+                        }}
+                        title="Abrir Visão 360º da Cliente (Twenty CRM)"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-lamarka-100 hover:bg-lamarka-200 text-lamarka-800 text-xs font-semibold shadow-2xs hover:shadow-xs transition-all border border-lamarka-300/60"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-lamarka-700" strokeWidth={1.5} />
+                        <span>360º</span>
+                      </button>
+
                       {/* Botão Copiar Link da Carteira */}
                       <button
                         type="button"
-                        onClick={() => handleCopyLink(c.magicToken)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopyLink(c.magicToken);
+                        }}
                         title="Copiar link da carteira digital"
                         className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs"
                       >
@@ -522,6 +586,7 @@ export default function AdminClientesPage() {
                         href={`https://wa.me/55${c.phone.replace(/\D/g, '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         title="Conversar no WhatsApp"
                         className="p-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs"
                       >
@@ -532,6 +597,7 @@ export default function AdminClientesPage() {
                       <Link
                         href={`/c/${c.magicToken}`}
                         target="_blank"
+                        onClick={(e) => e.stopPropagation()}
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-2xs hover:shadow-xs transition-all"
                       >
                         <Wallet className="w-3.5 h-3.5 text-[#DFB76C]" strokeWidth={1.5} />
@@ -542,7 +608,10 @@ export default function AdminClientesPage() {
                       {/* Botão Editar Dados */}
                       <button
                         type="button"
-                        onClick={() => handleOpenEditModal(c)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenEditModal(c);
+                        }}
                         title="Editar dados da cliente"
                         className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs"
                       >
@@ -552,6 +621,7 @@ export default function AdminClientesPage() {
                       {/* Botão Ajustar Saldo */}
                       <Link
                         href={`/admin/ajustes?customerId=${c.id}`}
+                        onClick={(e) => e.stopPropagation()}
                         title="Ajustar saldo manualmente"
                         className="p-2 rounded-xl border border-lamarka-200 text-lamarka-600 hover:bg-lamarka-100 hover:text-lamarka-900 transition-colors shadow-2xs"
                       >
@@ -720,6 +790,17 @@ export default function AdminClientesPage() {
           </div>
         </div>
       )}
+      {/* Gaveta Lateral Deslizante (Slide-over Drawer) 360º de Clientes inspirada no Twenty CRM */}
+      <CustomerDrawer
+        customer={selectedCustomer}
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedCustomer(null);
+        }}
+        onEdit={(customerToEdit) => handleOpenEditModal(customerToEdit)}
+        sellers={sellers}
+      />
     </div>
   );
 }

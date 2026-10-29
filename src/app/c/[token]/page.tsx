@@ -3,8 +3,9 @@ import { notFound } from 'next/navigation';
 import { getCustomerWalletByToken } from '@/lib/customer-service';
 import { WalletHeader } from '@/components/carteira/WalletHeader';
 import { BalanceCard } from '@/components/carteira/BalanceCard';
+import { VipProgressCard } from '@/components/carteira/VipProgressCard';
 import { TransactionHistory } from '@/components/carteira/TransactionHistory';
-import { Sparkles, Store, MapPin, MessageCircle } from 'lucide-react';
+import { Sparkles, Store, MessageCircle } from 'lucide-react';
 
 interface CustomerWalletPageProps {
   params: Promise<{
@@ -55,6 +56,11 @@ export default async function CustomerWalletPage({
 
   const { customer, balanceInfo, storeSettings, transactions } = walletData;
 
+  // Total acumulado histórico a partir das transações ativas
+  const totalAccumulated = transactions
+    .filter((tx) => tx.amount > 0)
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-lamarka-100/70 via-lamarka-50 to-white flex flex-col items-center pb-16 px-4 sm:px-6">
       <div className="w-full max-w-md flex flex-col items-center">
@@ -64,8 +70,19 @@ export default async function CustomerWalletPage({
           maskedPhone={customer.maskedPhone}
         />
 
-        {/* Card de Saldo VIP em Destaque */}
-        <BalanceCard balanceInfo={balanceInfo} />
+        {/* Card de Saldo VIP Matte em Destaque */}
+        <BalanceCard
+          balanceInfo={balanceInfo}
+          customerName={customer.firstName}
+        />
+
+        {/* Barra de Progresso VIP do Clube */}
+        <div className="w-full mt-3">
+          <VipProgressCard
+            availableBalance={balanceInfo.availableBalance}
+            totalAccumulated={totalAccumulated}
+          />
+        </div>
 
         {/* Informações da Loja & Como Usar */}
         <div className="w-full mt-3 bg-white/90 backdrop-blur-md border border-lamarka-200/90 rounded-2xl p-4 text-xs text-lamarka-700 flex items-start gap-3.5 shadow-card">
@@ -74,12 +91,17 @@ export default async function CustomerWalletPage({
           </div>
           <div className="flex-1 min-w-0">
             <p className="leading-relaxed font-light text-lamarka-800 text-xs break-words">
-              Seu cashback é um benefício exclusivo da <strong className="font-semibold text-lamarka-900">{storeSettings.storeName}</strong> ({storeSettings.defaultCashbackPercentage}% acumulado a cada compra com validade de {storeSettings.defaultExpirationDays} dias). Basta informar seu telefone no balcão da loja para abater seu saldo direto na sua próxima compra!
+              Seu cashback é um benefício exclusivo da{' '}
+              <strong className="font-semibold text-lamarka-900">
+                {storeSettings.storeName}
+              </strong>{' '}
+              ({storeSettings.defaultCashbackPercentage}% acumulado a cada compra com validade de{' '}
+              {storeSettings.defaultExpirationDays} dias). Basta informar seu telefone no balcão da loja para abater seu saldo direto na sua próxima compra!
             </p>
           </div>
         </div>
 
-        {/* Extrato Transparente */}
+        {/* Extrato Transparente no estilo Apple Card / Nubank Ultravioleta */}
         <TransactionHistory transactions={transactions} />
 
         {/* Rodapé da Carteira */}

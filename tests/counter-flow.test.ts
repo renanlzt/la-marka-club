@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { prisma } from '../src/lib/db';
 import { processCounterSale, registerQuickCustomer, searchCustomerForCounter } from '../src/lib/counter-service';
+import { formatCelebrationCashbackText } from '../src/components/balcao/RewardSuccessModal';
 import { nanoid } from 'nanoid';
 
 describe('Counter / Point of Sale Flow', () => {
@@ -56,6 +57,10 @@ describe('Counter / Point of Sale Flow', () => {
     expect(result.whatsAppMessage).toContain('Isabela');
     expect(result.whatsAppMessage).toContain('R$ 15,00');
     expect(result.whatsAppLink).toContain('https://wa.me/55');
+
+    // Verifica a mensagem de comemoração encantadora disparada no modal de sucesso
+    const celebrationNotice = formatCelebrationCashbackText(result.cashbackEarned);
+    expect(celebrationNotice).toBe('✨ Parabéns! Você acabou de ganhar R$ 15,00 de cashback!');
   });
 
   it('should process sale with redemption, calculate cashback on net amount and deduct balance', async () => {
@@ -80,5 +85,14 @@ describe('Counter / Point of Sale Flow', () => {
     expect(result.cashbackEarned).toBe(14.0);
     // Saldo anterior (40) - resgate (20) + novo cashback (14) = 34.00
     expect(result.newBalance).toBe(34.0);
+
+    // Celebração do novo cashback líquido
+    expect(formatCelebrationCashbackText(result.cashbackEarned)).toBe('✨ Parabéns! Você acabou de ganhar R$ 14,00 de cashback!');
+  });
+
+  it('should correctly format POS celebration delight banner text for customer delight', () => {
+    expect(formatCelebrationCashbackText(15)).toBe('✨ Parabéns! Você acabou de ganhar R$ 15,00 de cashback!');
+    expect(formatCelebrationCashbackText(42.5)).toBe('✨ Parabéns! Você acabou de ganhar R$ 42,50 de cashback!');
+    expect(formatCelebrationCashbackText(1250.75)).toBe('✨ Parabéns! Você acabou de ganhar R$ 1.250,75 de cashback!');
   });
 });
