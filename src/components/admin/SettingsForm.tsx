@@ -420,31 +420,31 @@ export function SettingsForm({
         {/* Simulação em Tempo Real das 4 Categorias */}
         <div className="bg-[#FAF6F5] rounded-2xl p-4 border border-lamarka-200/70">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-lamarka-600 block mb-1">
-            Simulação de Retorno em uma compra de R$ 300,00
+            Simulação de Retorno em uma compra de R$ 100,00
           </span>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
             <div className="bg-white rounded-xl p-2 border border-amber-900/20">
               <span className="text-[10px] text-amber-900/80 block">Bronze ({vipConfig.bronzePercentage}%)</span>
               <strong className="text-amber-950 font-semibold">
-                R$ {(300 * (vipConfig.bronzePercentage / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                R$ {(100 * (vipConfig.bronzePercentage / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </strong>
             </div>
             <div className="bg-white rounded-xl p-2 border border-slate-200">
               <span className="text-[10px] text-slate-500 block">Prata ({vipConfig.silverPercentage}%)</span>
               <strong className="text-slate-800 font-semibold">
-                R$ {(300 * (vipConfig.silverPercentage / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                R$ {(100 * (vipConfig.silverPercentage / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </strong>
             </div>
             <div className="bg-white rounded-xl p-2 border border-amber-200">
               <span className="text-[10px] text-amber-700 block">Ouro ({vipConfig.goldPercentage}%)</span>
               <strong className="text-amber-900 font-semibold">
-                R$ {(300 * (vipConfig.goldPercentage / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                R$ {(100 * (vipConfig.goldPercentage / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </strong>
             </div>
             <div className="bg-white rounded-xl p-2 border border-purple-200">
               <span className="text-[10px] text-purple-700 block">Diamante ({vipConfig.diamondPercentage}%)</span>
               <strong className="text-purple-900 font-semibold">
-                R$ {(300 * (vipConfig.diamondPercentage / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                R$ {(100 * (vipConfig.diamondPercentage / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </strong>
             </div>
           </div>
