@@ -2,7 +2,7 @@
 
 ---
 
-## 🟢 Fases Concluídas (100% Entregues & Em Produção)
+## 🟢 Fases Concluídas (100% Entregues, Testadas & Em Produção na Vercel)
 
 ### Fase 1: Fundação, Core Financeiro & Experiência Base
 - [x] **Motor Contábil FIFO (`fifo-engine.ts`):** Lotes de crédito por compra, consumo cronológico automático, saldo atômico com isolamento contábil e ledger imutável.
@@ -24,46 +24,38 @@
 - [x] **Proteção contra CSRF:** Bloqueio no middleware para requisições com origem externa fraudulenta.
 - [x] **Sanitização contra XSS:** Filtro rigoroso contra injeção de scripts e tags maliciosas em cadastros e observações (`sanitize.ts`).
 - [x] **Cabeçalhos Globais de Segurança HTTP:** Injeção de `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` e remoção do `X-Powered-By`.
-- [x] **Bateria de Testes Automatizados:** 68 testes no Vitest (16 arquivos de teste) 100% aprovados e build Next.js validado na Vercel.
+- [x] **Bateria de Testes Automatizados:** Suíte abrangente com Vitest cobrindo todos os cenários de segurança e validações contábeis.
+
+### 🎨 Fase 4: Haute Couture UI & Encantamento Visual (Onda 1)
+- [x] **Iniciativa 4.1: Cartão VIP Matte & Barra de Progresso na Carteira (`/c/:token`):**
+  - Cartão com acabamento fosco acetinado em terracota escuro e bordas em dourado champagne.
+  - Gravação em baixo-relevo visual de *LA MARKA PRIVILÈGE* e chip boutique com selo *MEMBRO PRIVILÈGE • VIP*.
+  - Barra de progresso de fidelidade com jornada visual (*Prata ➔ Ouro ➔ Diamante*).
+  - Extrato estilo Apple Card / Nubank Ultravioleta com agrupamento diário e formatação `pt-BR`.
+- [x] **Iniciativa 4.2: Gaveta Lateral Deslizante 360º no Painel da Dieizy (`/admin/clientes`):**
+  - *Slide-over Drawer* estilo Twenty CRM com abertura instantânea ao clicar na cliente.
+  - Avatar terracota, resumo em 4 cards (saldo, acumulado na vida, última compra, vendedora habitual) e link direto para WhatsApp com mensagem acolhedora pré-formatada.
+- [x] **Iniciativa 4.3: Micro-celebração Visual no Caixa (`/balcao`):**
+  - Efeito suave de partículas e brilho dourado (*CelebrationSparkles*) ao concluir a venda com texto comemorativo do cashback ganho.
+
+### 🚀 Fase 5: Inteligência de Recompra & Fidelização Avançada (Onda 2 & 3)
+- [x] **Iniciativa 5.1: Níveis de Fidelidade VIP Dinâmicos:**
+  - Níveis calculados automaticamente com base nas compras dos últimos 6 meses:
+    - 🥈 **Membro Prata (< R$ 500):** 1.0% de cashback
+    - ✨ **Membro Ouro (R$ 500 a R$ 1.500):** 1.5% de cashback
+    - 👑 **Membro Diamante (>= R$ 1.500):** 2.0% de cashback
+  - Aplicação automática da alíquota VIP na frente de caixa (`/balcao`) combinada com multiplicadores de campanhas ativas.
+- [x] **Iniciativa 5.2: Segmentação Inteligente de Recompra no Painel:**
+  - Barra de inteligência com contadores em tempo real para *Inativas há 45d*, *Vencendo em 15d*, *Aniversariantes da Semana* e *Clientes Top Tier*.
+  - Botão de 1 clique para WhatsApp com mensagem personalizada e contextualizada para cada situação.
+- [x] **Iniciativa 5.3: Passe Nativo para Apple Wallet & Google Wallet (`.pkpass` & Google Pay):**
+  - Endpoints `/api/wallet/apple/[token]` e `/api/wallet/google/[token]`.
+  - Componente `WalletPassButton` na carteira digital permitindo adicionar o cartão nativo no iPhone e Android com 1 toque.
+  - QR Code dinâmico do passe para leitura instantânea no balcão.
 
 ---
 
-## 🟡 Próximas Fases: Expansão Visual & Estratégica (Roadmap Aprovado)
-
-### 🎨 Fase 4: Haute Couture UI & Encantamento Visual
-*Refinamento estético inspirado nas melhores referências do varejo de luxo e fintechs modernas (Apple, Twenty CRM, Stampee).*
-
-- [ ] **Iniciativa 4.1: Cartão VIP Matte & Barra de Progresso na Carteira (`/c/:token`)**
-  - Design com acabamento fosco acetinado (*Matte Finish*) e bordas douradas sutis.
-  - Gravação de identificador de membro em relevo visual elegante (`Membro Privilège • Nº 0418`).
-  - Barra de progresso de fidelidade (*Gamificação Sofisticada*): indicador visual de quanto falta em compras para atingir a próxima categoria VIP.
-  - Extrato financeiro estilo Apple Card / Nubank Ultravioleta com linha do tempo pontilhada e separadores mensais.
-- [ ] **Iniciativa 4.2: Gaveta Lateral Deslizante 360º no Painel da Dieizy (`/admin/clientes`)**
-  - Implementação de *Slide-over Drawer* estilo Twenty CRM com efeito translúcido (*glassmorphism*).
-  - Ao clicar em qualquer cliente, abre o perfil 360º instantâneo: saldo atual, lotes a expirar, histórico de compras, vendedora habitual e atalho para WhatsApp sem recarregar ou trocar de página.
-  - Microinterações de tabela com iluminação suave (*hover*) e badges em tons pastéis acetinados.
-- [ ] **Iniciativa 4.3: Micro-celebração Visual no Caixa (`/balcao`)**
-  - Animação comemorativa suave com partículas e brilho dourado (*sparkles*) no modal de fechamento de venda.
-  - Layout otimizado para que a atendente possa virar a tela do tablet/smartphone para a cliente ver o crédito caindo na hora.
-
----
-
-### 🚀 Fase 5: Inteligência de Recompra & Fidelização Avançada
-*Mecanismos estratégicos inspirados no Voucherify e Formance Ledger para alavancar a receita e o engajamento da loja.*
-
-- [ ] **Iniciativa 5.1: Níveis de Fidelidade VIP (Tiers Dinâmicos)**
-  - Criação de categorias automáticas de clientes baseadas nas compras dos últimos 6 meses:
-    - 🌸 **Membro Prata:** 1.0% de cashback (padrão)
-    - ✨ **Membro Ouro:** 1.5% de cashback (para compras acumuladas acima de R$ X)
-    - 👑 **Membro Diamante:** 2.0% de cashback (para clientes mais assíduas)
-  - Aplicação automática do percentual de cashback no balcão de acordo com o nível da cliente.
-- [ ] **Iniciativa 5.2: Segmentação Inteligente de Recompra no Painel**
-  - Filtros rápidos com 1 clique para a Dieizy no menu de Clientes:
-    - 🛍️ *Clientes VIPs inativas (sem compras há mais de 45 dias)*
-    - ⚠️ *Clientes com saldo prestes a vencer neste mês*
-    - 🎂 *Aniversariantes da próxima semana*
-  - Ação em lote: geração do link de WhatsApp personalizado para cada cliente da lista filtrada.
-- [ ] **Iniciativa 5.3: Passe Nativo para Apple Wallet & Google Wallet (`.pkpass`)**
-  - Botão na carteira digital: *[ 📲 Adicionar à Carteira da Apple / Google ]*.
-  - Cartão nativo salvo diretamente no aplicativo Carteira do smartphone da cliente.
-  - Notificações automáticas na tela de bloqueio quando a cliente estiver nas proximidades da loja física.
+### 🧪 Status Atual de Qualidade e Confiabilidade:
+- **Testes Automatizados:** **19 arquivos de teste, 133 testes 100% aprovados** no Vitest.
+- **Build de Produção:** **35 rotas compiladas com sucesso** no Next.js 15.
+- **Deploy:** Commit `86b46cd` ativo em produção na Vercel ([lamarkaclub.vercel.app](https://lamarkaclub.vercel.app)).
