@@ -5,14 +5,24 @@ import {
   updateMessageTemplate,
   resetMessageTemplate,
 } from '@/lib/admin-service';
+import {
+  getActiveVipTierConfig,
+  saveActiveVipTierConfig,
+} from '@/lib/vip-tier-service';
 
 export async function GET() {
   try {
     const settings = await prisma.storeSetting.findUnique({
       where: { id: 'default' },
     });
-    const templates = await prisma.messageTemplate.findMany();
-    return NextResponse.json({ settings, templates });
+    const templates = await prisma.messageTemplate.findMany({
+      where: {
+        id: { not: 'VIP_TIER_CONFIG' },
+      },
+    });
+    const vipConfig = await getActiveVipTierConfig();
+
+    return NextResponse.json({ settings, templates, vipConfig });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -26,6 +36,11 @@ export async function POST(request: NextRequest) {
     if (action === 'update_settings') {
       const updated = await updateStoreSettings(body.data);
       return NextResponse.json({ settings: updated });
+    }
+
+    if (action === 'update_vip_config') {
+      const updatedVip = await saveActiveVipTierConfig(body.data);
+      return NextResponse.json({ vipConfig: updatedVip });
     }
 
     if (action === 'update_template') {

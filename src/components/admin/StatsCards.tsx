@@ -47,7 +47,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}`,
-      subtitle: `Resgatados: R$ ${stats.totalCashbackRedeemed.toFixed(2)}`,
+      subtitle: `Resgatados: R$ ${stats.totalCashbackRedeemed.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       icon: Coins,
       color: 'bg-amber-50 text-amber-800 border-amber-200',
     },

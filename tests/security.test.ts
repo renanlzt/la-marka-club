@@ -157,6 +157,19 @@ describe('Auditoria e Blindagem de Segurança da Aplicação', () => {
       expect(res.headers.get('location')).toContain('/login');
     });
 
+    it('deve permitir requisições públicas para passes da carteira em /api/wallet/ sem autenticação', async () => {
+      const appleReq = new NextRequest('http://localhost:3000/api/wallet/apple/token_exemplo');
+      const appleRes = await middleware(appleReq);
+      // Status 200 (NextResponse.next()) ao invés de 401 ou redirect
+      expect(appleRes.status).toBe(200);
+      expect(appleRes.headers.get('X-Frame-Options')).toBe('DENY');
+
+      const googleReq = new NextRequest('http://localhost:3000/api/wallet/google/token_exemplo');
+      const googleRes = await middleware(googleReq);
+      expect(googleRes.status).toBe(200);
+      expect(googleRes.headers.get('X-Frame-Options')).toBe('DENY');
+    });
+
     it('deve aplicar cabeçalhos de segurança HTTP em todas as respostas', async () => {
       const req = new NextRequest('http://localhost:3000/login');
       const res = await middleware(req);

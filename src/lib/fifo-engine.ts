@@ -206,13 +206,14 @@ export async function grantCashback(
     );
 
     // 3. Registra a transação no extrato
+    const formattedPurchase = purchaseAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const transaction = await tx.cashbackTransaction.create({
       data: {
         customerId,
         type: 'EARN',
         amount: cashbackEarned,
         balanceAfter: newBalance,
-        description: `Compra de R$ ${purchaseAmount.toFixed(2)} (${percentage}% cashback)`,
+        description: `Compra de R$ ${formattedPurchase} (${percentage}% cashback)`,
         operatorName,
       },
     });
@@ -302,6 +303,7 @@ export async function redeemCashback(
     );
 
     // Registra a transação no extrato
+    const formattedRedeem = redeemAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     await tx.cashbackTransaction.create({
       data: {
         customerId,
@@ -310,7 +312,7 @@ export async function redeemCashback(
         balanceAfter: newBalance,
         description:
           options?.description ||
-          `Resgate de saldo na compra (R$ ${redeemAmount.toFixed(2)})`,
+          `Resgate de saldo na compra (R$ ${formattedRedeem})`,
         operatorName,
         reason: options?.reason,
       },

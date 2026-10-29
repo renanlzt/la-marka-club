@@ -113,10 +113,10 @@ export default async function AdminDashboardPage() {
                           isPositive ? 'text-emerald-700' : 'text-lamarka-900'
                         }`}
                       >
-                        {isPositive ? '+' : ''} R$ {Math.abs(tx.amount).toFixed(2)}
+                        {isPositive ? '+' : ''} R$ {Math.abs(tx.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="py-3.5 text-right font-serif font-medium text-xs text-lamarka-600">
-                        R$ {tx.balanceAfter.toFixed(2)}
+                        R$ {tx.balanceAfter.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                     </tr>
                   );

@@ -82,6 +82,7 @@ export default async function CustomerWalletPage({
           <VipProgressCard
             availableBalance={balanceInfo.availableBalance}
             totalAccumulated={totalAccumulated}
+            vipTier={walletData.vipTier}
           />
         </div>
 

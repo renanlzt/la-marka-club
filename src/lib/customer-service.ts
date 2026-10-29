@@ -1,5 +1,6 @@
 import { prisma } from './db';
 import { getCustomerBalance, CustomerBalanceInfo } from './fifo-engine';
+import { getCustomerVipTier, VipTierInfo } from './vip-tier-service';
 
 export interface CustomerWalletData {
   customer: {
@@ -16,6 +17,7 @@ export interface CustomerWalletData {
     defaultCashbackPercentage: number;
     defaultExpirationDays: number;
   };
+  vipTier?: VipTierInfo;
   transactions: Array<{
     id: string;
     type: string;
@@ -614,6 +616,7 @@ export async function getCustomerWalletByToken(
 
   const balanceInfo = await getCustomerBalance(customer.id);
   const firstName = customer.name.trim().split(' ')[0];
+  const vipTier = await getCustomerVipTier(customer.id);
 
   const settings = await prisma.storeSetting.findUnique({
     where: { id: 'default' },
@@ -636,6 +639,7 @@ export async function getCustomerWalletByToken(
     },
     balanceInfo,
     storeSettings,
+    vipTier,
     transactions: customer.transactions.map((t) => ({
       id: t.id,
       type: t.type,

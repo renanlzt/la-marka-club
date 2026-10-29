@@ -1,7 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Sparkles, Check, Smartphone, ExternalLink, ShieldCheck, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Sparkles,
+  Check,
+  Smartphone,
+  ExternalLink,
+  ShieldCheck,
+  Download,
+  Share2,
+  MoreVertical,
+  X,
+  PlusCircle,
+  HelpCircle,
+} from 'lucide-react';
 
 interface WalletPassButtonProps {
   magicToken: string;
@@ -16,6 +28,37 @@ export function WalletPassButton({
 }: WalletPassButtonProps) {
   const [loadingType, setLoadingType] = useState<'apple' | 'google' | null>(null);
   const [downloadSuccess, setDownloadSuccess] = useState<'apple' | 'google' | null>(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    // Detecta se já está rodando como PWA (tela cheia)
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsStandalone(true);
+    }
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallPWA = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choiceResult = await deferredPrompt.userChoice;
+      if (choiceResult.outcome === 'accepted') {
+        setShowHelpModal(false);
+      }
+      setDeferredPrompt(null);
+    } else {
+      setShowHelpModal(true);
+    }
+  };
 
   const handleAppleWallet = () => {
     setLoadingType('apple');
@@ -47,7 +90,6 @@ export function WalletPassButton({
       setTimeout(() => setDownloadSuccess(null), 4000);
     } catch (err) {
       console.error('Erro ao abrir Google Wallet:', err);
-      // Fallback para redirect direto
       window.location.href = `/api/wallet/google/${encodeURIComponent(magicToken)}?redirect=true`;
     } finally {
       setLoadingType(null);
@@ -67,23 +109,47 @@ export function WalletPassButton({
               Cartão Digital no Celular
             </span>
             <h3 className="text-sm font-serif font-semibold text-lamarka-900 leading-tight">
-              📲 Adicionar à Carteira do Celular
+              📲 Salvar no Celular & Acesso Rápido
             </h3>
           </div>
         </div>
 
-        <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-medium tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-[#DFB76C]/20 text-[#8C6219] border border-[#DFB76C]/40">
-          <Sparkles className="w-3 h-3 text-[#DFB76C]" />
-          Acesso Rápido
-        </span>
+        <button
+          type="button"
+          onClick={() => setShowHelpModal(true)}
+          className="text-[10px] font-medium text-lamarka-500 hover:text-lamarka-800 flex items-center gap-1 cursor-pointer"
+        >
+          <HelpCircle className="w-3.5 h-3.5 text-[#DFB76C]" />
+          <span>Como funciona?</span>
+        </button>
       </div>
 
-      {/* Explicação sutil recomendada */}
-      <div className="bg-[#FAF6F5] rounded-2xl p-3 border border-lamarka-200/70 mb-4">
-        <p className="text-xs text-lamarka-700 font-light leading-relaxed">
-          Acesse seu saldo com 1 toque na tela de bloqueio e receba avisos perto da loja.
-        </p>
-      </div>
+      {/* Atalho Recomendado: PWA / Tela de Início */}
+      {!isStandalone && (
+        <div className="bg-gradient-to-r from-amber-50/90 via-[#FAF6F5] to-amber-50/60 rounded-2xl p-3.5 border border-[#DFB76C]/40 mb-3.5 flex items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white border border-[#DFB76C]/40 flex items-center justify-center text-[#8C6219] shrink-0 shadow-2xs">
+              <PlusCircle className="w-4 h-4 text-[#8C6219]" strokeWidth={2} />
+            </div>
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8C6219] block">
+                Atalho Direto no Celular
+              </span>
+              <p className="text-xs text-lamarka-800 font-medium leading-tight">
+                Instale o App na tela de início (Android e iPhone)
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleInstallPWA}
+            className="px-3.5 py-2 rounded-xl bg-[#8C6219] hover:bg-[#724f13] text-white text-[11px] font-semibold transition-all shadow-2xs hover:shadow-xs shrink-0 cursor-pointer whitespace-nowrap"
+          >
+            Adicionar à Tela
+          </button>
+        </div>
+      )}
 
       {/* Badges e Botões de Carteira Apple & Google */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -92,7 +158,7 @@ export function WalletPassButton({
           type="button"
           onClick={handleAppleWallet}
           disabled={loadingType !== null}
-          className="relative group flex items-center justify-between px-4 py-3 rounded-2xl bg-[#111111] hover:bg-black text-white text-xs font-medium transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed border border-white/10"
+          className="relative group flex items-center justify-between px-4 py-3 rounded-2xl bg-[#111111] hover:bg-black text-white text-xs font-medium transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed border border-white/10 cursor-pointer"
         >
           <div className="flex items-center gap-2.5">
             {/* Ícone Apple SVG oficial */}
@@ -128,7 +194,7 @@ export function WalletPassButton({
           type="button"
           onClick={handleGoogleWallet}
           disabled={loadingType !== null}
-          className="relative group flex items-center justify-between px-4 py-3 rounded-2xl bg-white hover:bg-white text-lamarka-900 text-xs font-medium transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed border border-lamarka-300"
+          className="relative group flex items-center justify-between px-4 py-3 rounded-2xl bg-white hover:bg-white text-lamarka-900 text-xs font-medium transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed border border-lamarka-300 cursor-pointer"
         >
           <div className="flex items-center gap-2.5">
             {/* Ícone Google Wallet SVG com 4 cores clássicas */}
@@ -171,6 +237,67 @@ export function WalletPassButton({
           </div>
         </button>
       </div>
+
+      {/* Modal Passo a Passo de Instalação no Celular */}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-luxury-lg border border-lamarka-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-lamarka-100 mb-4">
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-[#8C6219]" />
+                <h4 className="text-sm font-serif font-semibold text-lamarka-900">
+                  Como Salvar no Celular
+                </h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHelpModal(false)}
+                className="p-1 rounded-lg text-lamarka-400 hover:text-lamarka-700 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs text-lamarka-800">
+              {/* Android Passo a Passo */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                <span className="font-semibold text-slate-900 block mb-1">
+                  🤖 No Android (Google Chrome):
+                </span>
+                <ol className="list-decimal pl-4 space-y-1 text-slate-700 font-light">
+                  <li>Toque no menu de 3 pontinhos <strong className="font-semibold">(⋮)</strong> no topo.</li>
+                  <li>Selecione <strong className="font-semibold">"Adicionar à tela inicial"</strong> ou "Instalar app".</li>
+                  <li>Pronto! O ícone da La Marka ficará junto aos seus outros apps.</li>
+                </ol>
+              </div>
+
+              {/* iPhone Passo a Passo */}
+              <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200">
+                <span className="font-semibold text-amber-950 block mb-1">
+                  🍎 No iPhone (Safari):
+                </span>
+                <ol className="list-decimal pl-4 space-y-1 text-amber-900/90 font-light">
+                  <li>Toque no botão <strong className="font-semibold">Compartilhar</strong> (quadrado com seta para cima).</li>
+                  <li>Role para baixo e toque em <strong className="font-semibold">"Adicionar à Tela de Início"</strong>.</li>
+                  <li>Toque em <strong className="font-semibold">"Adicionar"</strong> no canto superior direito.</li>
+                </ol>
+              </div>
+
+              <div className="text-[11px] text-lamarka-500 font-light pt-1">
+                💡 O atalho abre a sua carteira digital instantaneamente em tela cheia com seu saldo sempre atualizado.
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowHelpModal(false)}
+              className="mt-5 w-full py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-xs cursor-pointer"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Feedback de sucesso temporário */}
       {downloadSuccess && (

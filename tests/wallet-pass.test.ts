@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { prisma } from '../src/lib/db';
 import { grantCashback } from '../src/lib/fifo-engine';
 import { generatePassData, formatPassExpiration } from '../src/lib/wallet-pass-service';
@@ -155,7 +156,7 @@ describe('Apple Wallet Pass API Endpoint - Integration Tests', () => {
   });
 
   it('GET /api/wallet/apple/[token] should return 200 with pass payload for valid token', async () => {
-    const request = new Request(`http://localhost:3000/api/wallet/apple/${validToken}`);
+    const request = new NextRequest(`http://localhost:3000/api/wallet/apple/${validToken}`);
     const context = { params: Promise.resolve({ token: validToken }) };
 
     const response = await getAppleWalletPass(request, context);
@@ -178,7 +179,7 @@ describe('Apple Wallet Pass API Endpoint - Integration Tests', () => {
 
   it('GET /api/wallet/apple/[token] should return 404 for invalid token', async () => {
     const invalidToken = 'token_fantasma_99999';
-    const request = new Request(`http://localhost:3000/api/wallet/apple/${invalidToken}`);
+    const request = new NextRequest(`http://localhost:3000/api/wallet/apple/${invalidToken}`);
     const context = { params: Promise.resolve({ token: invalidToken }) };
 
     const response = await getAppleWalletPass(request, context);
@@ -208,7 +209,7 @@ describe('Google Wallet Pass API Endpoint - Integration Tests', () => {
   });
 
   it('GET /api/wallet/google/[token] should return 200 with saveUrl and pass metadata', async () => {
-    const request = new Request(`http://localhost:3000/api/wallet/google/${validToken}`);
+    const request = new NextRequest(`http://localhost:3000/api/wallet/google/${validToken}`);
     const context = { params: Promise.resolve({ token: validToken }) };
 
     const response = await getGoogleWalletPass(request, context);
@@ -223,7 +224,7 @@ describe('Google Wallet Pass API Endpoint - Integration Tests', () => {
   });
 
   it('GET /api/wallet/google/[token] should return 404 for non-existent token', async () => {
-    const request = new Request('http://localhost:3000/api/wallet/google/invalid_token');
+    const request = new NextRequest('http://localhost:3000/api/wallet/google/invalid_token');
     const context = { params: Promise.resolve({ token: 'invalid_token' }) };
 
     const response = await getGoogleWalletPass(request, context);

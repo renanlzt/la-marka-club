@@ -4,6 +4,14 @@ import { Crown, Sparkles, Award, ChevronRight } from 'lucide-react';
 export interface VipProgressCardProps {
   availableBalance: number;
   totalAccumulated?: number;
+  vipTier?: {
+    tier: string;
+    percentage: number;
+    label: string;
+    badgeColor: string;
+    nextTierSpentRequired: number | null;
+    totalSpent6Months: number;
+  };
 }
 
 export function getVipTierInfo(accumulated: number) {
@@ -44,16 +52,60 @@ export function getVipTierInfo(accumulated: number) {
 export function VipProgressCard({
   availableBalance,
   totalAccumulated,
+  vipTier,
 }: VipProgressCardProps) {
   const effectiveAccumulated = Math.max(availableBalance, totalAccumulated ?? 0);
-  const tierInfo = getVipTierInfo(effectiveAccumulated);
+
+  // Se o objeto oficial do motor VIP for fornecido, utiliza os dados reais
+  let currentTier = 'Prata';
+  let nextTier = 'Ouro';
+  let isMaxTier = false;
+  let progressPercentage = 50;
+  let remaining = 0;
+  let badgeColor = 'bg-lamarka-200/60 text-lamarka-800 border-lamarka-300';
+  let percentage = 1.0;
+
+  if (vipTier) {
+    percentage = vipTier.percentage;
+    badgeColor = vipTier.badgeColor;
+
+    if (vipTier.tier === 'DIAMANTE') {
+      currentTier = 'Diamante';
+      nextTier = 'Categoria Máxima';
+      isMaxTier = true;
+      progressPercentage = 100;
+      remaining = 0;
+    } else if (vipTier.tier === 'OURO') {
+      currentTier = 'Ouro';
+      nextTier = 'Diamante';
+      isMaxTier = false;
+      remaining = vipTier.nextTierSpentRequired ?? 0;
+      const spent = vipTier.totalSpent6Months;
+      progressPercentage = Math.min(100, Math.max(10, Math.round((spent / (spent + remaining || 1)) * 100)));
+    } else {
+      currentTier = 'Prata';
+      nextTier = 'Ouro';
+      isMaxTier = false;
+      remaining = vipTier.nextTierSpentRequired ?? 500;
+      const spent = vipTier.totalSpent6Months;
+      progressPercentage = Math.min(100, Math.max(8, Math.round((spent / (spent + remaining || 1)) * 100)));
+    }
+  } else {
+    const fallback = getVipTierInfo(effectiveAccumulated);
+    currentTier = fallback.currentTier;
+    nextTier = fallback.nextTier;
+    isMaxTier = fallback.isMaxTier;
+    progressPercentage = fallback.progressPercentage;
+    remaining = fallback.remaining;
+    badgeColor = fallback.badgeColor;
+  }
 
   const formattedAccumulated = effectiveAccumulated.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-  const formattedRemaining = tierInfo.remaining.toLocaleString('pt-BR', {
+  const formattedRemaining = remaining.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -77,17 +129,17 @@ export function VipProgressCard({
         </div>
 
         <span
-          className={`inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full border shadow-2xs ${tierInfo.badgeColor}`}
+          className={`inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full border shadow-2xs ${badgeColor}`}
         >
           <Sparkles className="w-3 h-3 text-[#DFB76C]" />
-          Nível {tierInfo.currentTier}
+          Nível {currentTier} ({percentage}%)
         </span>
       </div>
 
       {/* Mensagem Acolhedora de Progresso */}
       <div className="bg-[#FAF6F5] rounded-2xl p-3.5 border border-lamarka-200/70 mb-4">
         <p className="text-xs text-lamarka-800 font-light leading-relaxed">
-          Você acumulou <strong className="font-semibold text-lamarka-900">R$ {formattedAccumulated}</strong> de cashback! Continue comprando para desbloquear benefícios exclusivos.
+          Você já acumulou <strong className="font-semibold text-lamarka-900">R$ {formattedAccumulated}</strong> de cashback! {isMaxTier ? 'Você já desfruta dos maiores benefícios e cashback da loja.' : `Continue comprando para alcançar o nível ${nextTier} e turbinar seu retorno.`}
         </p>
       </div>
 
@@ -96,15 +148,15 @@ export function VipProgressCard({
         <div className="flex items-center gap-1.5">
           <span className="text-lamarka-500 font-light">Nível Atual:</span>
           <span className="font-semibold text-lamarka-900 font-serif text-sm">
-            {tierInfo.currentTier}
+            {currentTier}
           </span>
         </div>
 
-        {!tierInfo.isMaxTier ? (
+        {!isMaxTier ? (
           <div className="flex items-center gap-1 text-lamarka-600">
             <span className="text-lamarka-500 font-light">Próximo:</span>
             <span className="font-semibold text-[#8C6219] font-serif text-sm flex items-center">
-              {tierInfo.nextTier}
+              {nextTier}
               <ChevronRight className="w-3.5 h-3.5 text-[#DFB76C]" />
             </span>
           </div>
@@ -119,7 +171,7 @@ export function VipProgressCard({
       <div className="w-full h-3 rounded-full bg-lamarka-100/90 p-0.5 border border-[#DFB76C]/25 overflow-hidden shadow-inner relative">
         <div
           className="h-full rounded-full bg-gradient-to-r from-[#DFB76C] via-[#EDD293] to-[#C59B94] transition-all duration-700 shadow-glow-gold relative overflow-hidden"
-          style={{ width: `${tierInfo.progressPercentage}%` }}
+          style={{ width: `${progressPercentage}%` }}
         >
           {/* Efeito sutil de luz na barra */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer" />
@@ -129,11 +181,11 @@ export function VipProgressCard({
       {/* Rodapé do Progresso */}
       <div className="flex items-center justify-between mt-2.5 px-0.5">
         <span className="text-[10px] tracking-wide text-lamarka-500 font-light">
-          {tierInfo.progressPercentage}% da jornada
+          {progressPercentage}% da jornada
         </span>
-        {!tierInfo.isMaxTier && (
+        {!isMaxTier && (
           <span className="text-[10px] tracking-wide text-lamarka-600 font-medium">
-            Faltam R$ {formattedRemaining} para {tierInfo.nextTier}
+            Faltam R$ {formattedRemaining} em compras para {nextTier}
           </span>
         )}
       </div>

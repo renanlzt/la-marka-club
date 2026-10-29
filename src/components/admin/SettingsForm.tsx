@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Save, Check, Settings2, Sparkles } from 'lucide-react';
+import { Save, Check, Crown, Sparkles, Shield, ArrowUpRight } from 'lucide-react';
+import { VipTierConfig, DEFAULT_VIP_CONFIG } from '@/lib/vip-tier-service';
 
-interface StoreSettingsData {
+export interface StoreSettingsData {
   storeName: string;
   defaultCashbackPercentage: number;
   defaultExpirationDays: number;
@@ -14,161 +15,425 @@ interface StoreSettingsData {
 
 interface SettingsFormProps {
   initialSettings: StoreSettingsData;
-  onSave: (data: StoreSettingsData) => Promise<void>;
+  initialVipConfig?: VipTierConfig;
+  onSave: (settingsData: StoreSettingsData, vipData?: VipTierConfig) => Promise<void>;
 }
 
-export function SettingsForm({ initialSettings, onSave }: SettingsFormProps) {
+export function SettingsForm({
+  initialSettings,
+  initialVipConfig,
+  onSave,
+}: SettingsFormProps) {
   const [formData, setFormData] = useState<StoreSettingsData>(initialSettings);
+  const [vipConfig, setVipConfig] = useState<VipTierConfig>(
+    initialVipConfig ?? {
+      ...DEFAULT_VIP_CONFIG,
+      silverPercentage: initialSettings.defaultCashbackPercentage ?? 1.0,
+    }
+  );
+
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Mantém o nível Prata sincronizado com o defaultCashbackPercentage
+  const handleDefaultCashbackChange = (val: number) => {
+    setFormData((prev) => ({ ...prev, defaultCashbackPercentage: val }));
+    setVipConfig((prev) => ({ ...prev, silverPercentage: val }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setSuccess(false);
     try {
-      await onSave(formData);
+      await onSave(formData, vipConfig);
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      setTimeout(() => setSuccess(false), 3500);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-white rounded-3xl border border-lamarka-200/90 p-6 sm:p-7 shadow-card flex flex-col gap-5"
-    >
-      <div className="border-b border-lamarka-100 pb-4">
-        <h3 className="text-lg font-serif font-medium text-lamarka-900">
-          Regras Gerais do Clube
-        </h3>
-        <p className="text-xs text-lamarka-600 font-light mt-0.5">
-          Defina os parâmetros padrão de cashback, validade e benefícios da La Marka.
-        </p>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      {/* 1. Regras Gerais do Clube */}
+      <div className="bg-white rounded-3xl border border-lamarka-200/90 p-6 sm:p-7 shadow-card flex flex-col gap-5">
+        <div className="border-b border-lamarka-100 pb-4">
+          <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-lamarka-600 block mb-1">
+            Parâmetros Gerais
+          </span>
+          <h3 className="text-lg font-serif font-medium text-lamarka-900">
+            Regras de Cashback & Validade
+          </h3>
+          <p className="text-xs text-lamarka-600 font-light mt-0.5">
+            Defina o cashback base da loja, validade dos lotes e bonificação de aniversário.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Percentual Padrão */}
+          <div>
+            <label className="text-xs font-semibold text-lamarka-800 block mb-1">
+              Percentual Padrão de Cashback (%)
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                step="any"
+                min="0"
+                max="100"
+                required
+                value={formData.defaultCashbackPercentage}
+                onChange={(e) =>
+                  handleDefaultCashbackChange(parseFloat(e.target.value) || 0)
+                }
+                className="w-full px-3.5 py-2.5 rounded-xl border border-lamarka-200 text-sm focus:outline-none focus:border-lamarka-500 focus:ring-1 focus:ring-lamarka-400 font-semibold text-lamarka-900"
+              />
+              <span className="absolute right-3.5 top-2.5 text-xs font-bold text-lamarka-400">
+                %
+              </span>
+            </div>
+            <span className="text-[11px] text-lamarka-500 font-light mt-1 block">
+              Aceita qualquer valor (inclusive menores que 1%, ex: 0,5% ou 0,05%).
+            </span>
+          </div>
+
+          {/* Validade */}
+          <div>
+            <label className="text-xs font-semibold text-lamarka-800 block mb-1">
+              Prazo Padrão de Validade do Cashback (dias)
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                min="1"
+                max="365"
+                required
+                value={formData.defaultExpirationDays}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    defaultExpirationDays: parseInt(e.target.value, 10) || 0,
+                  })
+                }
+                className="w-full px-3.5 py-2.5 rounded-xl border border-lamarka-200 text-sm focus:outline-none focus:border-lamarka-500 focus:ring-1 focus:ring-lamarka-400 font-semibold text-lamarka-900"
+              />
+              <span className="absolute right-3.5 top-2.5 text-xs font-bold text-lamarka-400">
+                dias
+              </span>
+            </div>
+            <span className="text-[11px] text-lamarka-500 font-light mt-1 block">
+              Período em que a cliente pode resgatar o saldo gerado na compra.
+            </span>
+          </div>
+
+          {/* Presente Aniversário R$ */}
+          <div>
+            <label className="text-xs font-semibold text-lamarka-800 block mb-1">
+              Valor do Presente de Aniversário (R$)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-2.5 text-xs font-bold text-lamarka-400">
+                R$
+              </span>
+              <input
+                type="number"
+                step="any"
+                min="0"
+                required
+                value={formData.birthdayBonusAmount}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    birthdayBonusAmount: parseFloat(e.target.value) || 0,
+                  })
+                }
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-lamarka-200 text-sm focus:outline-none focus:border-lamarka-500 focus:ring-1 focus:ring-lamarka-400 font-semibold text-lamarka-900"
+              />
+            </div>
+            <span className="text-[11px] text-lamarka-500 font-light mt-1 block">
+              Bônus especial em reais presenteado à aniversariante.
+            </span>
+          </div>
+
+          {/* Validade Presente Aniversário */}
+          <div>
+            <label className="text-xs font-semibold text-lamarka-800 block mb-1">
+              Validade do Presente de Aniversário (dias)
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                min="1"
+                max="180"
+                required
+                value={formData.birthdayBonusValidityDays}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    birthdayBonusValidityDays: parseInt(e.target.value, 10) || 0,
+                  })
+                }
+                className="w-full px-3.5 py-2.5 rounded-xl border border-lamarka-200 text-sm focus:outline-none focus:border-lamarka-500 focus:ring-1 focus:ring-lamarka-400 font-semibold text-lamarka-900"
+              />
+              <span className="absolute right-3.5 top-2.5 text-xs font-bold text-lamarka-400">
+                dias
+              </span>
+            </div>
+            <span className="text-[11px] text-lamarka-500 font-light mt-1 block">
+              Prazo para a cliente usar o presente na loja.
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="text-xs font-semibold text-lamarka-800 block mb-1">
-            Percentual Padrão de Cashback (%)
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              step="0.5"
-              min="1"
-              max="100"
-              required
-              value={formData.defaultCashbackPercentage}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  defaultCashbackPercentage: parseFloat(e.target.value) || 0,
-                })
-              }
-              className="w-full px-3.5 py-2.5 rounded-xl border border-lamarka-200 text-sm focus:outline-none focus:border-lamarka-500 focus:ring-1 focus:ring-lamarka-400 font-semibold text-lamarka-900"
-            />
-            <span className="absolute right-3.5 top-2.5 text-xs font-bold text-lamarka-400">
-              %
-            </span>
+      {/* 2. Níveis de Fidelidade VIP Configuráveis */}
+      <div className="bg-white rounded-3xl border border-[#DFB76C]/40 p-6 sm:p-7 shadow-card flex flex-col gap-5">
+        <div className="flex items-center justify-between border-b border-lamarka-100 pb-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Crown className="w-4 h-4 text-[#DFB76C]" strokeWidth={1.75} />
+              <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#8C6219]">
+                Programa de Fidelidade Exclusivo
+              </span>
+            </div>
+            <h3 className="text-lg font-serif font-medium text-lamarka-900">
+              Níveis VIP La Marka Privilège
+            </h3>
+            <p className="text-xs text-lamarka-600 font-light mt-0.5">
+              Personalize os limites de compras acumuladas (últimos 6 meses) e os percentuais de cashback de cada categoria.
+            </p>
           </div>
-          <span className="text-[11px] text-lamarka-500 font-light mt-1 block">
-            Ex: Compra de R$ 300,00 a 5% gera R$ 15,00 de crédito.
+
+          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full bg-[#DFB76C]/20 text-[#8C6219] border border-[#DFB76C]/40">
+            <Sparkles className="w-3 h-3 text-[#DFB76C]" />
+            Níveis Dinâmicos
           </span>
         </div>
 
-        <div>
-          <label className="text-xs font-semibold text-lamarka-800 block mb-1">
-            Prazo Padrão de Validade do Cashback (dias)
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              min="7"
-              max="365"
-              required
-              value={formData.defaultExpirationDays}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  defaultExpirationDays: parseInt(e.target.value, 10) || 0,
-                })
-              }
-              className="w-full px-3.5 py-2.5 rounded-xl border border-lamarka-200 text-sm focus:outline-none focus:border-lamarka-500 focus:ring-1 focus:ring-lamarka-400 font-semibold text-lamarka-900"
-            />
-            <span className="absolute right-3.5 top-2.5 text-xs font-bold text-lamarka-400">
-              dias
-            </span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Categoria 1: Prata (Base) */}
+          <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-800">
+                  🥈 Membro Prata
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 font-medium">
+                  Base Inicial
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 font-light mb-3">
+                Para novas participantes ou compras acumuladas abaixo da meta Ouro.
+              </p>
+
+              <label className="text-[11px] font-medium text-slate-700 block mb-1">
+                Cashback Prata (%):
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  max="100"
+                  required
+                  value={vipConfig.silverPercentage}
+                  onChange={(e) =>
+                    handleDefaultCashbackChange(parseFloat(e.target.value) || 0)
+                  }
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                />
+                <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">
+                  %
+                </span>
+              </div>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-slate-200/80 text-[10px] text-slate-500 font-light">
+              Gasto mínimo: <strong className="font-semibold text-slate-700">R$ 0,00</strong>
+            </div>
           </div>
-          <span className="text-[11px] text-lamarka-500 font-light mt-1 block">
-            Ex: 45 dias para estimular o retorno frequente à loja.
-          </span>
+
+          {/* Categoria 2: Ouro */}
+          <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50/50 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-amber-900">
+                  🥇 Membro Ouro
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-200/80 text-amber-900 font-medium">
+                  Intermediário
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-800/80 font-light mb-3">
+                Para clientes com volume consistente de recompra na loja.
+              </p>
+
+              <div className="space-y-2.5">
+                <div>
+                  <label className="text-[11px] font-medium text-amber-900 block mb-1">
+                    Compras Mínimas (6 meses):
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-2 text-xs font-bold text-amber-600">
+                      R$
+                    </span>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      required
+                      value={vipConfig.goldMinSpent}
+                      onChange={(e) =>
+                        setVipConfig({
+                          ...vipConfig,
+                          goldMinSpent: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      className="w-full pl-8 pr-3 py-2 rounded-xl border border-amber-300 text-xs font-bold text-amber-950 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-amber-900 block mb-1">
+                    Cashback Ouro (%):
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      max="100"
+                      required
+                      value={vipConfig.goldPercentage}
+                      onChange={(e) =>
+                        setVipConfig({
+                          ...vipConfig,
+                          goldPercentage: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-amber-300 text-xs font-bold text-amber-950 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                    <span className="absolute right-3 top-2 text-xs font-bold text-amber-500">
+                      %
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-amber-200/80 text-[10px] text-amber-700 font-light">
+              Ex: {vipConfig.goldPercentage}% a partir de R$ {vipConfig.goldMinSpent.toLocaleString('pt-BR')}
+            </div>
+          </div>
+
+          {/* Categoria 3: Diamante */}
+          <div className="p-4 rounded-2xl border border-purple-200 bg-purple-50/50 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-purple-900">
+                  💎 Membro Diamante
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-200/80 text-purple-900 font-medium">
+                  Categoria Máxima
+                </span>
+              </div>
+              <p className="text-[11px] text-purple-800/80 font-light mb-3">
+                Para as principais clientes VIP com o maior faturamento na loja.
+              </p>
+
+              <div className="space-y-2.5">
+                <div>
+                  <label className="text-[11px] font-medium text-purple-900 block mb-1">
+                    Compras Mínimas (6 meses):
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-2 text-xs font-bold text-purple-600">
+                      R$
+                    </span>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      required
+                      value={vipConfig.diamondMinSpent}
+                      onChange={(e) =>
+                        setVipConfig({
+                          ...vipConfig,
+                          diamondMinSpent: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      className="w-full pl-8 pr-3 py-2 rounded-xl border border-purple-300 text-xs font-bold text-purple-950 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-purple-900 block mb-1">
+                    Cashback Diamante (%):
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      max="100"
+                      required
+                      value={vipConfig.diamondPercentage}
+                      onChange={(e) =>
+                        setVipConfig({
+                          ...vipConfig,
+                          diamondPercentage: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-purple-300 text-xs font-bold text-purple-950 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                    <span className="absolute right-3 top-2 text-xs font-bold text-purple-500">
+                      %
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-purple-200/80 text-[10px] text-purple-700 font-light">
+              Ex: {vipConfig.diamondPercentage}% a partir de R$ {vipConfig.diamondMinSpent.toLocaleString('pt-BR')}
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label className="text-xs font-semibold text-lamarka-800 block mb-1">
-            Valor do Presente de Aniversário (R$)
-          </label>
-          <div className="relative">
-            <span className="absolute left-3.5 top-2.5 text-xs font-bold text-lamarka-400">
-              R$
-            </span>
-            <input
-              type="number"
-              step="5"
-              min="0"
-              required
-              value={formData.birthdayBonusAmount}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  birthdayBonusAmount: parseFloat(e.target.value) || 0,
-                })
-              }
-              className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-lamarka-200 text-sm focus:outline-none focus:border-lamarka-500 focus:ring-1 focus:ring-lamarka-400 font-semibold text-lamarka-900"
-            />
-          </div>
-          <span className="text-[11px] text-lamarka-500 font-light mt-1 block">
-            Bônus especial em reais presenteado à aniversariante.
+        {/* Simulação em Tempo Real */}
+        <div className="bg-[#FAF6F5] rounded-2xl p-4 border border-lamarka-200/70">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-lamarka-600 block mb-1">
+            Simulação de Retorno em uma compra de R$ 300,00
           </span>
-        </div>
-
-        <div>
-          <label className="text-xs font-semibold text-lamarka-800 block mb-1">
-            Validade do Presente de Aniversário (dias)
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              min="7"
-              max="180"
-              required
-              value={formData.birthdayBonusValidityDays}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  birthdayBonusValidityDays: parseInt(e.target.value, 10) || 0,
-                })
-              }
-              className="w-full px-3.5 py-2.5 rounded-xl border border-lamarka-200 text-sm focus:outline-none focus:border-lamarka-500 focus:ring-1 focus:ring-lamarka-400 font-semibold text-lamarka-900"
-            />
-            <span className="absolute right-3.5 top-2.5 text-xs font-bold text-lamarka-400">
-              dias
-            </span>
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="bg-white rounded-xl p-2 border border-slate-200">
+              <span className="text-[10px] text-slate-500 block">Prata ({vipConfig.silverPercentage}%)</span>
+              <strong className="text-slate-800 font-semibold">
+                R$ {(300 * (vipConfig.silverPercentage / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </strong>
+            </div>
+            <div className="bg-white rounded-xl p-2 border border-amber-200">
+              <span className="text-[10px] text-amber-700 block">Ouro ({vipConfig.goldPercentage}%)</span>
+              <strong className="text-amber-900 font-semibold">
+                R$ {(300 * (vipConfig.goldPercentage / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </strong>
+            </div>
+            <div className="bg-white rounded-xl p-2 border border-purple-200">
+              <span className="text-[10px] text-purple-700 block">Diamante ({vipConfig.diamondPercentage}%)</span>
+              <strong className="text-purple-900 font-semibold">
+                R$ {(300 * (vipConfig.diamondPercentage / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </strong>
+            </div>
           </div>
-          <span className="text-[11px] text-lamarka-500 font-light mt-1 block">
-            Prazo para a cliente usar o presente na loja.
-          </span>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-lamarka-100 gap-3">
+      {/* Salvar Parâmetros */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white rounded-3xl border border-lamarka-200 gap-3 shadow-xs">
         <div>
           {success && (
-            <span className="text-xs text-emerald-700 font-medium flex items-center gap-1">
-              <Check className="w-4 h-4" /> Parâmetros salvos com sucesso!
+            <span className="text-xs text-emerald-700 font-medium flex items-center gap-1.5 animate-fadeIn">
+              <Check className="w-4 h-4 text-emerald-600" /> Parâmetros e Níveis VIP salvos com sucesso!
             </span>
           )}
         </div>
@@ -176,10 +441,10 @@ export function SettingsForm({ initialSettings, onSave }: SettingsFormProps) {
         <button
           type="submit"
           disabled={saving}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-luxury hover:shadow-luxury-lg flex items-center justify-center gap-2"
+          className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold transition-all shadow-luxury hover:shadow-luxury-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
         >
-          <Save className="w-3.5 h-3.5" strokeWidth={1.5} />
-          {saving ? 'Salvando...' : 'Salvar Parâmetros'}
+          <Save className="w-4 h-4" strokeWidth={1.75} />
+          {saving ? 'Salvando Parâmetros...' : 'Salvar Todos os Parâmetros'}
         </button>
       </div>
     </form>

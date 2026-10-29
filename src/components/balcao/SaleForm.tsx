@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, ArrowRight, Coins, AlertCircle, Sparkles, UserCheck } from 'lucide-react';
 import { CounterCustomerSummary, CounterSaleResult } from '@/lib/counter-service';
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
 
 interface SaleFormProps {
   customer: CounterCustomerSummary;
@@ -27,9 +28,9 @@ export function SaleForm({
   onClearCustomer,
   onSaleComplete,
 }: SaleFormProps) {
-  const [purchaseAmount, setPurchaseAmount] = useState('');
+  const [purchaseAmount, setPurchaseAmount] = useState<number>(0);
   const [useCashback, setUseCashback] = useState(false);
-  const [redeemAmount, setRedeemAmount] = useState('');
+  const [redeemAmount, setRedeemAmount] = useState<number>(0);
   const [operatorName, setOperatorName] = useState('Balcão / Caixa Geral');
   const [sellers, setSellers] = useState<Array<{ id: string; name: string }>>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -50,15 +51,12 @@ export function SaleForm({
   }, []);
 
   const availableBalance = customer.balanceInfo.availableBalance;
-  const numPurchase = parseFloat(purchaseAmount.replace(',', '.')) || 0;
+  const numPurchase = purchaseAmount;
   const numRedeem = useCashback
-    ? Math.min(
-        availableBalance,
-        parseFloat(redeemAmount.replace(',', '.')) || 0
-      )
+    ? Math.min(availableBalance, redeemAmount)
     : 0;
 
-  const netPayable = Math.max(0, numPurchase - numRedeem);
+  const netPayable = Math.max(0, Number((numPurchase - numRedeem).toFixed(2)));
 
   // Percentual base de fidelidade VIP da cliente (respeitando campanhas promocionais ativas)
   const basePercentage = customer.vipTier?.percentage ?? (settings?.defaultCashbackPercentage ?? 1.0);
@@ -78,9 +76,9 @@ export function SaleForm({
     if (checked) {
       // Preenche sugestão com o saldo total disponível ou valor total da compra
       const maxPossible = Math.min(availableBalance, numPurchase > 0 ? numPurchase : availableBalance);
-      setRedeemAmount(maxPossible > 0 ? maxPossible.toFixed(2) : '');
+      setRedeemAmount(maxPossible);
     } else {
-      setRedeemAmount('');
+      setRedeemAmount(0);
     }
   };
 
@@ -166,7 +164,7 @@ export function SaleForm({
             <button
               type="button"
               onClick={onClearCustomer}
-              className="text-[11px] text-lamarka-400 hover:text-lamarka-800 block mt-0.5 underline transition-colors"
+              className="text-[11px] text-lamarka-400 hover:text-lamarka-800 block mt-0.5 underline transition-colors cursor-pointer"
             >
               Trocar cliente
             </button>
@@ -189,7 +187,7 @@ export function SaleForm({
 
             {customer.vipTier.nextTierSpentRequired !== null && customer.vipTier.nextTierSpentRequired > 0 ? (
               <span className="text-[11px] text-lamarka-600 font-light">
-                Faltam <strong className="font-semibold text-lamarka-800">R$ {customer.vipTier.nextTierSpentRequired.toFixed(2)}</strong> em compras para o próximo nível
+                Faltam <strong className="font-semibold text-lamarka-800">R$ {customer.vipTier.nextTierSpentRequired.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> em compras para o próximo nível
               </span>
             ) : (
               <span className="text-[11px] text-purple-700 font-medium flex items-center gap-1">
@@ -204,7 +202,7 @@ export function SaleForm({
         <div className="mt-4 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/80 text-amber-950 text-xs flex items-center gap-2.5 shadow-2xs">
           <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" strokeWidth={1.5} />
           <span className="font-light">
-            Atenção: <strong className="font-semibold text-amber-900">R$ {customer.balanceInfo.expiringAmount.toFixed(2)}</strong> de cashback expiram em {customer.balanceInfo.expiringInDays} {customer.balanceInfo.expiringInDays === 1 ? 'dia' : 'dias'}! Excelente momento para a cliente abater hoje.
+            Atenção: <strong className="font-semibold text-amber-900">R$ {customer.balanceInfo.expiringAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> de cashback expiram em {customer.balanceInfo.expiringInDays} {customer.balanceInfo.expiringInDays === 1 ? 'dia' : 'dias'}! Excelente momento para a cliente abater hoje.
           </span>
         </div>
       )}
@@ -215,26 +213,28 @@ export function SaleForm({
         </div>
       )}
 
-      {/* Formulário de Registro de Venda */}
+      {/* Formulário de Registro de Venda com Mascara Monetaria em Tempo Real */}
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4.5">
         <div>
           <label className="text-xs font-semibold uppercase tracking-wider text-lamarka-800 block mb-1.5">
             Valor Total da Compra (R$) *
           </label>
           <div className="relative">
-            <span className="absolute left-4 top-3 text-base font-serif text-lamarka-400 font-medium">
+            <span className="absolute left-4 top-3 text-base font-serif text-lamarka-400 font-medium z-10 pointer-events-none">
               R$
             </span>
-            <input
-              type="text"
-              required
+            <CurrencyInput
               value={purchaseAmount}
-              onChange={(e) => setPurchaseAmount(e.target.value)}
+              onChange={(val) => setPurchaseAmount(val)}
               placeholder="0,00"
-              className="w-full pl-12 pr-4 py-3 rounded-2xl border border-lamarka-200 text-xl font-serif font-bold text-lamarka-900 focus:outline-none focus:border-lamarka-600 focus:ring-2 focus:ring-lamarka-200 bg-white shadow-2xs transition-all placeholder:text-lamarka-300"
+              required
               autoFocus
+              className="w-full pl-12 pr-4 py-3 rounded-2xl border border-lamarka-200 text-xl font-serif font-bold text-lamarka-900 focus:outline-none focus:border-lamarka-600 focus:ring-2 focus:ring-lamarka-200 bg-white shadow-2xs transition-all placeholder:text-lamarka-300"
             />
           </div>
+          <span className="text-[11px] text-lamarka-500 font-light mt-1 block">
+            Digite o valor da compra (ex: 15000 vira R$ 150,00 automaticamente).
+          </span>
         </div>
 
         {/* Opção de Resgate de Saldo */}
@@ -249,24 +249,24 @@ export function SaleForm({
               />
               <span className="text-xs font-semibold text-lamarka-900 flex items-center gap-1.5">
                 <Coins className="w-3.5 h-3.5 text-lamarka-600" strokeWidth={1.5} />
-                Deseja utilizar cashback nesta compra? (Saldo: R$ {availableBalance.toFixed(2)})
+                Deseja utilizar cashback nesta compra? (Saldo: R$ {availableBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
               </span>
             </label>
 
             {useCashback && (
               <div className="pt-2.5 border-t border-lamarka-200/70 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <span className="text-xs text-lamarka-700 shrink-0">
+                <span className="text-xs text-lamarka-700 shrink-0 font-medium">
                   Valor a abater:
                 </span>
                 <div className="flex items-center gap-2 flex-1 w-full">
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-2 text-xs font-semibold text-lamarka-400">
+                    <span className="absolute left-3 top-2 text-xs font-semibold text-lamarka-400 z-10 pointer-events-none">
                       R$
                     </span>
-                    <input
-                      type="text"
+                    <CurrencyInput
                       value={redeemAmount}
-                      onChange={(e) => setRedeemAmount(e.target.value)}
+                      onChange={(val) => setRedeemAmount(val)}
+                      max={Math.min(availableBalance, numPurchase > 0 ? numPurchase : availableBalance)}
                       placeholder="0,00"
                       className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-lamarka-300 text-xs font-bold text-lamarka-900 focus:outline-none focus:border-lamarka-600 bg-white shadow-2xs"
                     />
@@ -275,10 +275,10 @@ export function SaleForm({
                     type="button"
                     onClick={() =>
                       setRedeemAmount(
-                        Math.min(availableBalance, numPurchase > 0 ? numPurchase : availableBalance).toFixed(2)
+                        Math.min(availableBalance, numPurchase > 0 ? numPurchase : availableBalance)
                       )
                     }
-                    className="px-3 py-1.5 rounded-xl bg-lamarka-200 hover:bg-lamarka-300 text-lamarka-800 text-[11px] font-semibold transition-colors shadow-2xs shrink-0 whitespace-nowrap"
+                    className="px-3 py-1.5 rounded-xl bg-lamarka-200 hover:bg-lamarka-300 text-lamarka-800 text-[11px] font-semibold transition-colors shadow-2xs shrink-0 whitespace-nowrap cursor-pointer"
                   >
                     Usar Máximo
                   </button>
@@ -288,7 +288,7 @@ export function SaleForm({
           </div>
         )}
 
-        {/* Resumo da Operação */}
+        {/* Resumo da Operação com Formatação BRL */}
         {numPurchase > 0 && (
           <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 flex items-center justify-between shadow-2xs">
             <div>
@@ -296,7 +296,7 @@ export function SaleForm({
                 Valor a Pagar no Caixa:
               </span>
               <span className="text-xl sm:text-2xl font-serif font-bold text-emerald-950">
-                R$ {netPayable.toFixed(2)}
+                R$ {netPayable.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
 
@@ -306,7 +306,7 @@ export function SaleForm({
               </span>
               <span className="text-base sm:text-lg font-serif font-bold text-emerald-700 flex items-center gap-1 justify-end">
                 <Sparkles className="w-3.5 h-3.5 text-[#DFB76C]" />
-                + R$ {estimatedCashback.toFixed(2)}
+                + R$ {estimatedCashback.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               {customer.vipTier && (
                 <span className="text-[10px] text-emerald-800/80 font-medium block mt-0.5">
@@ -354,7 +354,7 @@ export function SaleForm({
         <button
           type="submit"
           disabled={submitting || numPurchase <= 0}
-          className="w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white font-semibold text-xs sm:text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-luxury hover:shadow-luxury-lg mt-2 text-center"
+          className="w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white font-semibold text-xs sm:text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-luxury hover:shadow-luxury-lg mt-2 text-center cursor-pointer"
         >
           <ShoppingBag className="w-4 h-4 shrink-0" strokeWidth={1.5} />
           <span>{submitting ? 'Lançando Venda...' : 'Finalizar Venda & Conceder Cashback'}</span>

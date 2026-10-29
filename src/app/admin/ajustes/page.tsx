@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import { Sliders, Search, Check, AlertCircle, ShieldAlert } from 'lucide-react';
+import { CurrencyInput } from '@/components/ui/CurrencyInput';
 
 export default function AdminAjustesPage() {
   const [phoneQuery, setPhoneQuery] = useState('');
   const [customer, setCustomer] = useState<any>(null);
   const [searching, setSearching] = useState(false);
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState<number>(0);
   const [type, setType] = useState<'ADD' | 'SUBTRACT'>('ADD');
   const [reason, setReason] = useState('');
   const [operatorName, setOperatorName] = useState('Dieizy');
@@ -39,7 +40,7 @@ export default function AdminAjustesPage() {
 
   const handleAdjust = async (e: React.FormEvent) => {
     e.preventDefault();
-    const numAmount = parseFloat(amount.replace(',', '.')) || 0;
+    const numAmount = amount;
 
     if (numAmount <= 0) {
       setErrorMessage('Informe um valor maior que zero.');
@@ -71,8 +72,12 @@ export default function AdminAjustesPage() {
 
       const data = await res.json();
       if (res.ok && data.result) {
+        const formattedNewBalance = data.result.newBalance.toLocaleString('pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
         setSuccessMessage(
-          `Ajuste realizado com sucesso! Novo saldo da cliente: R$ ${data.result.newBalance.toFixed(2)}`
+          `Ajuste realizado com sucesso! Novo saldo da cliente: R$ ${formattedNewBalance}`
         );
         setCustomer({
           ...customer,
@@ -81,7 +86,7 @@ export default function AdminAjustesPage() {
             availableBalance: data.result.newBalance,
           },
         });
-        setAmount('');
+        setAmount(0);
         setReason('');
       } else {
         setErrorMessage(data.error || 'Erro ao processar ajuste.');
@@ -123,7 +128,7 @@ export default function AdminAjustesPage() {
           <button
             type="submit"
             disabled={searching}
-            className="px-6 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-sm transition-all"
+            className="px-6 py-2.5 rounded-2xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
           >
             {searching ? 'Buscando...' : 'Buscar Cliente'}
           </button>
@@ -139,7 +144,7 @@ export default function AdminAjustesPage() {
             <div className="text-right">
               <span className="text-[10px] uppercase font-semibold text-lamarka-500 tracking-wider block">Saldo Atual</span>
               <span className="text-xl font-serif font-semibold text-emerald-800">
-                R$ {customer.balanceInfo.availableBalance.toFixed(2)}
+                R$ {customer.balanceInfo.availableBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           </div>
@@ -178,9 +183,9 @@ export default function AdminAjustesPage() {
                 <button
                   type="button"
                   onClick={() => setType('ADD')}
-                  className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                     type === 'ADD'
-                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
                       : 'border-lamarka-200 text-lamarka-700 hover:bg-lamarka-50'
                   }`}
                 >
@@ -189,9 +194,9 @@ export default function AdminAjustesPage() {
                 <button
                   type="button"
                   onClick={() => setType('SUBTRACT')}
-                  className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                     type === 'SUBTRACT'
-                      ? 'bg-rose-600 text-white border-rose-600'
+                      ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
                       : 'border-lamarka-200 text-lamarka-700 hover:bg-lamarka-50'
                   }`}
                 >
@@ -204,14 +209,18 @@ export default function AdminAjustesPage() {
               <label className="text-xs font-semibold text-lamarka-800 block mb-1">
                 Valor do Ajuste (R$) *
               </label>
-              <input
-                type="text"
-                required
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0,00"
-                className="w-full px-3.5 py-2 rounded-xl border border-lamarka-200 text-xs font-bold focus:outline-none focus:border-lamarka-500"
-              />
+              <div className="relative">
+                <span className="absolute left-3.5 top-2.5 text-xs font-bold text-lamarka-400 z-10 pointer-events-none">
+                  R$
+                </span>
+                <CurrencyInput
+                  value={amount}
+                  onChange={(val) => setAmount(val)}
+                  placeholder="0,00"
+                  required
+                  className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-lamarka-200 text-xs font-bold text-lamarka-900 focus:outline-none focus:border-lamarka-500 bg-white"
+                />
+              </div>
             </div>
           </div>
 
@@ -225,7 +234,7 @@ export default function AdminAjustesPage() {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Ex: Devolução de vestido sem cupom / Bonificação especial Dieizy"
-              className="w-full px-3.5 py-2 rounded-xl border border-lamarka-200 text-xs focus:outline-none focus:border-lamarka-500"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-lamarka-200 text-xs focus:outline-none focus:border-lamarka-500 text-lamarka-900"
             />
             <span className="text-[11px] text-lamarka-500 font-light mt-1 block">
               Este motivo ficará salvo no extrato da cliente e no log interno da loja.
@@ -240,14 +249,14 @@ export default function AdminAjustesPage() {
               type="text"
               value={operatorName}
               onChange={(e) => setOperatorName(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl border border-lamarka-200 text-xs focus:outline-none focus:border-lamarka-500"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-lamarka-200 text-xs focus:outline-none focus:border-lamarka-500 text-lamarka-900"
             />
           </div>
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold mt-2 transition-all shadow-sm"
+            className="w-full py-3 rounded-xl bg-lamarka-800 hover:bg-lamarka-900 text-white text-xs font-semibold mt-2 transition-all shadow-sm cursor-pointer disabled:opacity-50"
           >
             {submitting ? 'Gravando Ajuste...' : 'Confirmar Ajuste no Saldo'}
           </button>

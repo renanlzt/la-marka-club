@@ -21,17 +21,34 @@ import {
   X,
 } from 'lucide-react';
 
-const menuItems = [
-  { href: '/admin/dashboard', label: 'Visão Geral & KPIs', icon: LayoutDashboard },
-  { href: '/admin/clientes', label: 'Clientes & Carteiras', icon: Users },
-  { href: '/admin/vendedores', label: 'Equipe de Vendedoras', icon: UserCheck },
-  { href: '/admin/usuarios', label: 'Usuários & Acessos', icon: ShieldCheck },
-  { href: '/admin/campanhas', label: 'Campanhas Especiais', icon: Megaphone },
-  { href: '/admin/aniversarios', label: 'Aniversariantes', icon: Gift },
-  { href: '/admin/conciliacao', label: 'Conciliação de Cupons', icon: FileCheck2 },
-  { href: '/admin/ajustes', label: 'Ajustes Manuais', icon: Sliders },
-  { href: '/admin/configuracoes', label: 'Configurações & Mensagens', icon: Settings },
+const menuGroups = [
+  {
+    title: 'Visão Geral',
+    items: [
+      { href: '/admin/dashboard', label: 'Painel & Indicadores', icon: LayoutDashboard },
+      { href: '/admin/clientes', label: 'Clientes & Carteiras', icon: Users },
+    ],
+  },
+  {
+    title: 'Engajamento & Vendas',
+    items: [
+      { href: '/admin/campanhas', label: 'Campanhas Especiais', icon: Megaphone },
+      { href: '/admin/aniversarios', label: 'Aniversariantes do Mês', icon: Gift },
+      { href: '/admin/vendedores', label: 'Equipe de Vendedoras', icon: UserCheck },
+    ],
+  },
+  {
+    title: 'Gestão & Parâmetros',
+    items: [
+      { href: '/admin/conciliacao', label: 'Conciliação de Cupons', icon: FileCheck2 },
+      { href: '/admin/ajustes', label: 'Ajustes de Saldo', icon: Sliders },
+      { href: '/admin/usuarios', label: 'Usuários & Acessos', icon: ShieldCheck },
+      { href: '/admin/configuracoes', label: 'Configurações do Clube', icon: Settings },
+    ],
+  },
 ];
+
+const allMenuItems = menuGroups.flatMap((g) => g.items);
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -51,7 +68,7 @@ export function AdminSidebar() {
     }
   };
 
-  const activeItem = menuItems.find((item) => item.href === pathname);
+  const activeItem = allMenuItems.find((item) => item.href === pathname);
 
   return (
     <>
@@ -80,7 +97,7 @@ export function AdminSidebar() {
         <button
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-xl border border-lamarka-200 text-lamarka-700 hover:bg-lamarka-100 transition-colors shadow-2xs"
+          className="p-2 rounded-xl border border-lamarka-200 text-lamarka-700 hover:bg-lamarka-100 transition-colors shadow-2xs cursor-pointer"
           aria-label={mobileOpen ? 'Fechar menu' : 'Abrir menu de navegação'}
         >
           {mobileOpen ? (
@@ -105,35 +122,42 @@ export function AdminSidebar() {
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="p-1.5 rounded-lg text-lamarka-400 hover:text-lamarka-700"
+                className="p-1.5 rounded-lg text-lamarka-400 hover:text-lamarka-700 cursor-pointer"
               >
                 <X className="w-5 h-5" strokeWidth={1.5} />
               </button>
             </div>
 
-            <nav className="space-y-1">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-medium transition-all ${
-                      isActive
-                        ? 'bg-lamarka-800 text-white shadow-xs'
-                        : 'text-lamarka-700 hover:bg-lamarka-50 hover:text-lamarka-950'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
+            <nav className="space-y-4">
+              {menuGroups.map((group) => (
+                <div key={group.title} className="space-y-1">
+                  <span className="text-[9px] uppercase tracking-[0.2em] font-semibold text-lamarka-400 px-3 block">
+                    {group.title}
+                  </span>
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                          isActive
+                            ? 'bg-lamarka-800 text-white shadow-xs'
+                            : 'text-lamarka-700 hover:bg-lamarka-50 hover:text-lamarka-950'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
             </nav>
 
-            <div className="pt-4 mt-3 border-t border-lamarka-100 flex flex-col gap-2">
+            <div className="pt-4 mt-4 border-t border-lamarka-100 flex flex-col gap-2">
               <Link
                 href="/balcao"
                 onClick={() => setMobileOpen(false)}
@@ -146,7 +170,7 @@ export function AdminSidebar() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl text-rose-700 hover:bg-rose-50 text-xs font-medium transition-colors"
+                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl text-rose-700 hover:bg-rose-50 text-xs font-medium transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" strokeWidth={1.5} />
                 Sair do Painel
@@ -179,26 +203,33 @@ export function AdminSidebar() {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                  isActive
-                    ? 'bg-lamarka-800 text-white shadow-xs'
-                    : 'text-lamarka-700 hover:bg-lamarka-50 hover:text-lamarka-950'
-                }`}
-              >
-                <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-                {item.label}
-              </Link>
-            );
-          })}
+        {/* Navigation com Categorias Elegantes */}
+        <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
+          {menuGroups.map((group) => (
+            <div key={group.title} className="space-y-1">
+              <span className="text-[9px] uppercase tracking-[0.2em] font-semibold text-lamarka-400 px-3.5 block">
+                {group.title}
+              </span>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                      isActive
+                        ? 'bg-lamarka-800 text-white shadow-xs'
+                        : 'text-lamarka-700 hover:bg-lamarka-50 hover:text-lamarka-950'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         {/* Back to Balcão & Sair Footer */}
@@ -214,7 +245,7 @@ export function AdminSidebar() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl text-rose-700 hover:bg-rose-50 text-xs font-medium transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl text-rose-700 hover:bg-rose-50 text-xs font-medium transition-colors cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
             Sair do Painel

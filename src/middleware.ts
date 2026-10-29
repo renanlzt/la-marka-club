@@ -44,6 +44,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/api/admin/auth/logout' ||
     pathname === '/api/admin/auth/me' ||
     pathname.startsWith('/c/') || // Carteira digital da cliente por token
+    pathname.startsWith('/api/wallet/') || // Passes da carteira Apple Wallet (.pkpass) e Google Wallet API
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
     pathname.endsWith('.png') ||

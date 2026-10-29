@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { SettingsForm } from '@/components/admin/SettingsForm';
+import Link from 'next/link';
+import { SettingsForm, StoreSettingsData } from '@/components/admin/SettingsForm';
 import { TemplateEditor } from '@/components/admin/TemplateEditor';
-import { SecuritySettings } from '@/components/admin/SecuritySettings';
-import { Settings, Sparkles, AlertCircle } from 'lucide-react';
+import { Settings, Sparkles, ShieldCheck, ArrowRight } from 'lucide-react';
+import { VipTierConfig } from '@/lib/vip-tier-service';
 
 export default function AdminConfiguracoesPage() {
-  const [settings, setSettings] = useState<any>(null);
+  const [settings, setSettings] = useState<StoreSettingsData | null>(null);
+  const [vipConfig, setVipConfig] = useState<VipTierConfig | undefined>(undefined);
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -16,6 +18,7 @@ export default function AdminConfiguracoesPage() {
       const res = await fetch('/api/admin/settings');
       const data = await res.json();
       if (data.settings) setSettings(data.settings);
+      if (data.vipConfig) setVipConfig(data.vipConfig);
       if (data.templates) setTemplates(data.templates);
     } catch (err) {
       console.error(err);
@@ -28,8 +31,12 @@ export default function AdminConfiguracoesPage() {
     fetchData();
   }, []);
 
-  const handleSaveSettings = async (newSettings: any) => {
-    const res = await fetch('/api/admin/settings', {
+  const handleSaveSettings = async (
+    newSettings: StoreSettingsData,
+    newVipConfig?: VipTierConfig
+  ) => {
+    // 1. Salva regras gerais da loja
+    const resSettings = await fetch('/api/admin/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -37,9 +44,27 @@ export default function AdminConfiguracoesPage() {
         data: newSettings,
       }),
     });
-    if (res.ok) {
-      const data = await res.json();
+
+    if (resSettings.ok) {
+      const data = await resSettings.json();
       setSettings(data.settings);
+    }
+
+    // 2. Salva regras de Níveis VIP
+    if (newVipConfig) {
+      const resVip = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_vip_config',
+          data: newVipConfig,
+        }),
+      });
+
+      if (resVip.ok) {
+        const dataVip = await resVip.json();
+        setVipConfig(dataVip.vipConfig);
+      }
     }
   };
 
@@ -95,20 +120,44 @@ export default function AdminConfiguracoesPage() {
           Configurações & Mensagens
         </h1>
         <p className="text-xs sm:text-sm text-lamarka-600 font-light mt-1">
-          Gerencie o percentual padrão de cashback, validade, presentes de aniversário e os templates de WhatsApp com fallback oficial.
+          Gerencie os níveis VIP de fidelidade, percentual padrão de cashback, validade, presente de aniversário e os templates de WhatsApp.
         </p>
       </div>
 
       {settings && (
         <SettingsForm
           initialSettings={settings}
+          initialVipConfig={vipConfig}
           onSave={handleSaveSettings}
         />
       )}
 
-      {/* Acesso e Segurança (Login/Senha) */}
-      <SecuritySettings />
+      {/* Card Executivo de Direcionamento para Gestão de Usuários */}
+      <div className="bg-[#FAF6F5] rounded-3xl border border-lamarka-200/80 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-white border border-lamarka-200 flex items-center justify-center text-lamarka-800 shrink-0 shadow-2xs">
+            <ShieldCheck className="w-5 h-5 text-lamarka-700" strokeWidth={1.75} />
+          </div>
+          <div>
+            <h4 className="text-sm font-serif font-semibold text-lamarka-900 leading-tight">
+              Acessos, Senhas & Equipe de Vendedoras
+            </h4>
+            <p className="text-xs text-lamarka-600 font-light mt-0.5">
+              Crie logins, defina permissões (Gestão vs Balcão) e altere senhas na central de equipe.
+            </p>
+          </div>
+        </div>
 
+        <Link
+          href="/admin/usuarios"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-lamarka-50 text-lamarka-800 text-xs font-semibold border border-lamarka-300/80 transition-all shadow-2xs hover:shadow-xs shrink-0"
+        >
+          <span>Gerenciar Usuários & Acessos</span>
+          <ArrowRight className="w-3.5 h-3.5 text-lamarka-500" />
+        </Link>
+      </div>
+
+      {/* Editor de Templates de WhatsApp */}
       {templates.length > 0 && (
         <TemplateEditor
           templates={templates}
