@@ -39,6 +39,8 @@ export async function middleware(request: NextRequest) {
   // 1. Rotas Públicas Isentas de Autenticação
   if (
     pathname === '/login' ||
+    pathname === '/consulta' ||
+    pathname === '/api/consulta' ||
     pathname === '/admin/login' ||
     pathname === '/api/admin/auth/login' ||
     pathname === '/api/admin/auth/logout' ||

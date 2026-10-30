@@ -10,6 +10,7 @@ import {
   MessageCircle,
   ShieldCheck,
   Lock,
+  Wallet,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -37,6 +38,15 @@ export default function HomePage() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <Link
+            href="/consulta"
+            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-white border border-lamarka-200 text-lamarka-800 hover:bg-lamarka-100 text-xs font-semibold shadow-2xs hover:shadow-xs transition-all shrink-0"
+            title="Consulte seu saldo e benefícios no La Marka Club"
+          >
+            <Wallet className="w-3.5 h-3.5 text-[#DFB76C] shrink-0" strokeWidth={1.5} />
+            <span>Consultar Carteira</span>
+          </Link>
+
           <a
             href="https://www.instagram.com/la.marka/"
             target="_blank"
@@ -76,9 +86,20 @@ export default function HomePage() {
           Seu bom gosto recompensado a cada compra.
         </h1>
 
-        <p className="text-sm sm:text-base text-lamarka-600 max-w-xl font-light leading-relaxed mb-10">
+        <p className="text-sm sm:text-base text-lamarka-600 max-w-xl font-light leading-relaxed mb-6">
           O <strong>La Marka Club</strong> transforma suas escolhas de moda em créditos imediatos em dinheiro real. Toda compra acumula saldo para você renovar seu closet sempre com novidades exclusivas.
         </p>
+
+        {/* Acesso à Consulta da Carteira */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
+          <Link
+            href="/consulta"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white hover:bg-lamarka-50 border border-lamarka-300 text-lamarka-800 text-xs sm:text-sm font-semibold shadow-2xs hover:shadow-xs transition-all group"
+          >
+            <Wallet className="w-4 h-4 text-[#DFB76C] group-hover:scale-110 transition-transform" strokeWidth={1.5} />
+            <span>Consultar Minha Carteira</span>
+          </Link>
+        </div>
 
         {/* 4 Pilares / Benefícios */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full text-left mb-12">

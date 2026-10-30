@@ -668,3 +668,145 @@ export async function getCustomerWalletByToken(
     })),
   };
 }
+
+export interface CustomerLookupInput {
+  name?: string;
+  phone?: string;
+  birthDay?: number | null;
+  birthMonth?: number | null;
+}
+
+export interface CustomerLookupResult {
+  success: boolean;
+  magicToken?: string;
+  customerName?: string;
+  error?: string;
+}
+
+function normalizeForSearch(str: string): string {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Consulta pública da carteira da cliente por combinação de pelo menos 2 critérios:
+ * - Telefone
+ * - Data de aniversário (Dia e Mês)
+ * - Nome (parcial ou completo)
+ */
+export async function lookupCustomerWallet(
+  input: CustomerLookupInput
+): Promise<CustomerLookupResult> {
+  const cleanName = input.name ? input.name.trim() : '';
+  const cleanPhone = input.phone ? input.phone.replace(/\D/g, '') : '';
+  const birthDay =
+    typeof input.birthDay === 'number' && !isNaN(input.birthDay) ? input.birthDay : null;
+  const birthMonth =
+    typeof input.birthMonth === 'number' && !isNaN(input.birthMonth) ? input.birthMonth : null;
+
+  const hasName = cleanName.length >= 2;
+  const hasPhone = cleanPhone.length >= 8;
+  const hasBirthday =
+    birthDay !== null &&
+    birthDay >= 1 &&
+    birthDay <= 31 &&
+    birthMonth !== null &&
+    birthMonth >= 1 &&
+    birthMonth <= 12;
+
+  const validCount = (hasName ? 1 : 0) + (hasPhone ? 1 : 0) + (hasBirthday ? 1 : 0);
+
+  if (validCount < 2) {
+    return {
+      success: false,
+      error:
+        'Por favor, preencha pelo menos 2 campos (ex: Telefone e Data de Aniversário, ou Nome e Telefone) para localizar sua carteira com segurança.',
+    };
+  }
+
+  // Monta condições de busca no banco
+  const whereConditions: any[] = [];
+
+  if (hasPhone) {
+    const last8 = cleanPhone.slice(-8);
+    whereConditions.push({
+      phone: { contains: last8 },
+    });
+  }
+
+  if (hasBirthday) {
+    whereConditions.push({
+      birthDay,
+      birthMonth,
+    });
+  }
+
+  // Busca candidatos no banco
+  const candidates = await prisma.customer.findMany({
+    where: whereConditions.length > 0 ? { AND: whereConditions } : undefined,
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      birthDay: true,
+      birthMonth: true,
+      magicToken: true,
+    },
+  });
+
+  // Filtra em memória para matching preciso com nome parcial e telefone
+  const matched = candidates.filter((c) => {
+    // 1. Checa nome se foi informado
+    if (hasName) {
+      const normalizedQuery = normalizeForSearch(cleanName);
+      const normalizedCandidate = normalizeForSearch(c.name);
+      if (!normalizedCandidate.includes(normalizedQuery)) {
+        return false;
+      }
+    }
+
+    // 2. Checa telefone se foi informado
+    if (hasPhone) {
+      const candidateDigits = c.phone.replace(/\D/g, '');
+      const queryDigits = cleanPhone;
+      // Aceita correspondência se terminar com os mesmos dígitos ou conter
+      if (!candidateDigits.includes(queryDigits) && !candidateDigits.endsWith(queryDigits.slice(-8))) {
+        return false;
+      }
+    }
+
+    // 3. Checa aniversário se foi informado
+    if (hasBirthday) {
+      if (c.birthDay !== birthDay || c.birthMonth !== birthMonth) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  if (matched.length === 0) {
+    return {
+      success: false,
+      error:
+        'Nenhuma carteira foi localizada com as informações preenchidas. Por favor, confira os dados ou solicite ajuda em nossa loja física.',
+    };
+  }
+
+  if (matched.length > 1) {
+    return {
+      success: false,
+      error:
+        'Encontramos mais de um cadastro correspondente. Por favor, informe também o seu número de telefone para consultar sua carteira com segurança.',
+    };
+  }
+
+  return {
+    success: true,
+    magicToken: matched[0].magicToken,
+    customerName: matched[0].name,
+  };
+}
